@@ -1,13 +1,13 @@
 {
 	"compilerOptions": {
-	  "target": "ES2020",
-	  "module": "commonjs",
-	  "outDir": "./dist",
-	  "rootDir": "./src",
-	  "strict": true,
-	  "esModuleInterop": true,
-	  "skipLibCheck": true,
-	  "forceConsistentCasingInFileNames": true	// 대소문자구분, cross platform
+		"target": "ES6",
+		"module": "commonjs",
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true	// 대소문자구분, cross platform
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"]
