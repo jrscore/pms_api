@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { Grid, IMeta, Inverter, MonitData, PV, VCB } from '../../../data/model';
 import { devLog, generateTimeBasedOnNow, intParser, wait } from '../../../helper/helper';
+import { IMeta } from '../../repository/mnt_meta_repository';
+import { Grid, Inverter, Monit, PV, Vcb } from '../../repository/mongoose_model';
 
 
 
@@ -35,7 +36,7 @@ export class DNE_Crawler {
 		};
 	}
 
-	async fetch(): Promise<MonitData> {
+	async fetch(): Promise<Monit> {
 		try {
 			await this.login()
 			if (!this.isLogin) throw new Error("Token not set!");
@@ -160,7 +161,7 @@ export class DNE_Crawler {
 		return null
 	}
 
-	async VCB(): Promise<VCB | null> {
+	async VCB(): Promise<Vcb| null> {
 		return null
 	}
 }

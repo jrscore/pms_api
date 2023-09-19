@@ -23,7 +23,7 @@ async function main() {
 	// 몽구스db 초기화
 	database.initializer();
 
-	const PORT = process.env.port || 8000;
+	const PORT = 8000;
 	const app = express();
 
 

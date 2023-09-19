@@ -1,6 +1,6 @@
 import axios from "axios";
 import { IMeta } from "../repository/mnt_meta_repository";
-import { Monit, Grid, PV, Inverter, Vcb } from "../repository/mnt_mnt_repository";
+import { Grid, Inverter, Monit, PV, Vcb } from "../repository/mongoose_model";
 
 // BaseCrawler 추상 클래스 정의
 export abstract class AbsCrawler {

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { devLog,  intParser, wait } from '../../../helper/helper';
 import { IMeta } from '../../repository/mnt_meta_repository';
-import { PV, Inverter, Grid, Monit, Vcb } from '../../repository/mnt_mnt_repository';
+import { Monit, PV, Inverter, Grid, Vcb } from '../../repository/mongoose_model';
 
 
 
