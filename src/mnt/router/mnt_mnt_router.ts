@@ -1,5 +1,4 @@
 import express from 'express';
-import { container } from 'tsyringe';
 import { MonitService } from '../service/mnt_mnt_service';
 
 /*
