@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>다쓰테크 모니터링 시스템</title>
+<link rel="shortcut icon" href="/resources/img/common/favicon.ico" type="image/x-icon" >
+<link rel="stylesheet" type="text/css" href="/resources/css/custom.css">
+<link rel="stylesheet" type="text/css" href="/resources/css/common.css">
+<link rel="stylesheet" type="text/css" href="/resources/css/jquery-ui.min.css">
+<link rel="stylesheet" type="text/css" href="/resources/plugin/select2-4.0.0/css/select2.min.css">
+<script type="text/javascript">
+var searchDate = "";
+var paramSearchUnit = "";
+var contextPath = "";
+var auth = "P";
+var _topMenu = 'monitoring';
+var _subMenu = 'none';
+var _isCurrentDeviceNormal = true;
+</script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery-3.1.0.js"></script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/resources/plugin/etc/jshashtable-2.1.js"></script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery.i18n.properties-1.0.9.js"></script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery-migrate-1.1.1.min.js"></script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery.alphanumeric.pack.js"></script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery.numberformatter-1.2.3.min.js"></script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery.number.min.js"></script>
+<script type="text/javascript" src="/resources/plugin/select2-4.0.0/js/select2.full.min.js"></script>
+<script type="text/javascript" src="/resources/plugin/etc/materialsidebar.min.js"></script>
+<script type="text/javascript" src="/resources/js/util.js"></script>
+<script type="text/javascript" src="/resources/js/ui_util.js"></script>
+<script type="text/javascript" src="/resources/js/common.js"></script>
+
+<link href="/resources/plugin/jquery.jqplot.1.0.9/jquery.jqplot.css" rel="stylesheet" type="text/css">
+<script type="text/javascript">
+var project = {"LNG":127.766922,"CREATE_USER":"admin","INV_MODEL_CODE":7,"SIDO":"061","TIME_ZONE_DIFF":9,"SYSTEM_STANDARD":1200,"SITE_NAME":"장산1호태양광","MONITORING_START_DATE":"2021.01.08","SITE_ACTIVE":"1","NATION":"1-001","SIDO_NAME":"전라남도","ADDR1":"신북면 장산리  561","CONTINENT":"1","TIME_ZONE_ID":"Asia/Seoul","INSTALLER_TEL":"010-5033-4122","CREATE_TIME":1609919595437,"POW_CAP":99.9,"AGENCY_TEL":"010-6327-7101","PROJ_UNAME":"김길원","INV_COUNT":3,"SITE_CODE":4881,"REGION":"15","BIGO":"DSP-3334K2-J * 3대","PROJ_TEL":"01029913321","FILE_IMG_LOGO_SEQ":0,"REGION_NAME":"영암군","MOD_TIME":1609920243103,"AGENCY_NAME":"원광산업","MOD_USER":"admin","INSTALLER_NAME":"(주)그린디엔씨(정광원대표)","FILE_IMG_MAIN_SEQ":0,"LAT":35.907757};
+var refreshTimeInfo = [{"reg_date":1561966087923,"page_name":"통합관제센터 > 가동현황(지도)","modifier":"admin","use_yn":"1","idx":1,"refresh_time":90},{"reg_date":1561966119403,"page_name":"통합관제센터 > 가동현황(표)","modifier":"admin","use_yn":"1","idx":2,"refresh_time":90},{"reg_date":1561966129243,"page_name":"통합관제센터 > 고장 플랜트 정보","modifier":"admin","use_yn":"1","idx":3,"refresh_time":60},{"reg_date":1561966136660,"page_name":"통합관제센터 > 고장플랜트 상세정보","modifier":"admin","use_yn":"1","idx":4,"refresh_time":90},{"reg_date":1561966143513,"page_name":"통합관제센터 > 발전현황","modifier":"admin","use_yn":"1","idx":5,"refresh_time":90},{"reg_date":1561966150693,"page_name":"통합관제센터 > 실시간 현황","modifier":"admin","use_yn":"1","idx":6,"refresh_time":90},{"reg_date":1561966158533,"page_name":"관리 > 고장관리(지도)","modifier":"admin","use_yn":"1","idx":7,"refresh_time":90},{"reg_date":1561966166257,"page_name":"관리 > 고장관리(표)","modifier":"admin","use_yn":"1","idx":8,"refresh_time":90},{"reg_date":1561966173020,"page_name":"실시간현황 > 발전현황","modifier":"admin","use_yn":"1","idx":9,"refresh_time":90},{"reg_date":1561966176450,"page_name":"실시간현황 > 시스템현황","modifier":"admin","use_yn":"1","idx":10,"refresh_time":90}];
+var time = 60;
+</script>
+<script type="text/javascript" src="/resources/plugin/etc/justgage.js"></script>
+<script type="text/javascript" src="/resources/plugin/etc/raphael-2.1.4.min.js"></script>
+<script src="/resources/plugin/jquery.jqplot.1.0.9/jquery.jqplot.js" type="text/javascript"></script>
+<script src="/resources/plugin/jquery.jqplot.1.0.9/plugins/jqplot.pieRenderer.js" type="text/javascript"></script>
+<script src="/resources/plugin/jquery.jqplot.1.0.9/plugins/jqplot.highlighter.js" type="text/javascript"></script>
+<script src="/resources/plugin/jquery.jqplot.1.0.9/plugins/jqplot.enhancedLegendRenderer.js" type="text/javascript"></script>
+<script type="text/javascript" src="/resources/plugin/jquery/jquery.scrollText.js"></script>
+<script type="text/javascript" src="/resources/js/weather.js"></script>
+<script type="text/javascript" src="/resources/js/monitoring/developmentSituation.js"></script>
+<script type="text/javascript">
+
+window.onload = function () {
+	for (var i = 0; i < refreshTimeInfo.length; i++) 
+	{
+		var data = refreshTimeInfo[i];
+		if(data.idx == 9) {
+			time = data.refresh_time;
+			break;
+		}
+	}
+	
+	window.ref1 = window.setInterval(getDevelopmentSituationData, time * 1000);
+}
+</script>
+
+<script>
+	function popUp(w, h)
+	{
+		 x = (screen.availWidth - w) / 2;
+		 y = (screen.availHeight - h) / 2;
+		 window.open('/administrator/ems/runStateMap', 'map', 'resizable, scrollbars=yes' ,'통합관제센터','width='+w+', height='+h+', left='+x+', top='+y);
+	}
+</script>
+</head>
+<body>
+	
+	<header>
+		<ul>
+			<li class="mode">
+				다쓰테크 모니터링 시스템
+				
+				
+				<strong class="warning">일반모드</strong>
+			</li>
+			<li class="lang">
+				<div class="styled-select">
+					<select class="common_locale" name="locale">
+						<option value="kr" >Korea</option>
+						<option value="en" >English</option>
+					</select>
+				</div>
+			</li>
+			
+			<li><a href="/logout">로그아웃</a></li>
+			<li><a href="javascript:;">김길원</a></li>
+			
+			
+		</ul>
+		
+		<div class="notice" id="notice_wrapper">
+			<a href="/notice/list?IDX=12"><p><span> 카카오챗봇 AS 접수 시스템 도입 안내 </span></p></a>
+		</div>
+		
+		
+	</header>
+	<nav>
+		<div class="nav-wrap">
+			<ul class="topmenu r-menu">
+				<li class="introduction"><a href="/introduction"><strong>개요</strong></a></li>
+				<li class="notice"><a href="/notice/list"><strong>공지사항</strong></a></li>
+				<li class="faq"><a href="/faq/list"><strong>FAQ</strong></a></li>
+				
+				
+				<li class="projectmanagement"><a href="/administrator/breakdown/list"><strong>고장관리</strong></a></li>
+				
+				<li class="as"><a href="/customerInquiery/registerForm"><strong>A/S 센터</strong></a></li>
+				
+			</ul>
+			<ul class="topmenu l-menu">
+				<li class="logo"><a href="/monitoring/list"><img src="/resources/img/logo.png" alt="다쓰테크 모니터링 시스템"></a></li>
+				
+				
+				
+					
+						<li class="monitoring"><a href="/monitoring/developmentSituation?SITE_CODE=4881"><strong>실시간 현황</strong></a></li>
+					
+					
+				
+				
+				<li class="monitoring_detail"><a href="/monitoring/detail/inverter?SITE_CODE=4881"><strong>상세정보</strong></a></li>
+				<li class="monitoring_statistics_analysis"><a href="/monitoring/statisticsAnalysis/netgeneration?SEARCH_UNIT=day&SITE_CODE=4881"><strong>통계 분석</strong></a></li>
+				<li class="monitoring_data_search"><a href="/monitoring/dataSearch/inverter?SITE_CODE=4881"><strong>데이터 검색</strong></a></li>
+				
+				
+			</ul>
+		</div>
+	</nav>
+	
+	
+<div class="sub-navi">
+	<ul>
+		<li class="on"><a href="/monitoring/developmentSituation?SITE_CODE=4881">발전현황<em></em></a></li>
+		<li><a href="/monitoring/systemPresentCondition?SITE_CODE=4881">시스템 현황<em></em></a></li>
+	</ul>
+</div>
+<section class="business">
+   	<div class="title-wrap">
+   		<p>발전현황</p>
+   	   	<div class="styled-select right mr0">
+			<select name="SITE_CODE" id="SITE_CODE">
+				<option value="">플랜트 이동</option>
+				
+				<option value="4881" selected="selected">장산1호태양광</option>
+				
+			</select>
+		</div>
+   	</div>
+	<div class="graph-wrap">
+		<p class="subject" id="currentProjectInfo">
+			<span>장산1호태양광</span> <span class="warning">99.9kW</span>
+		</p>
+		<p class="date" id="currentDateTime"></p>
+	</div>
+	<div class="status-top" id="weather">
+		<div class="status-weather">
+		</div>
+		<div class="status-notice">
+			<!--<img src="/resources/img/icon_notice.gif" alt=""> --> <span></span>
+		</div>
+	</div>
+	
+	<div class="status-wrap">
+   		<div class="status-box left mr3per status-bg">
+   		    <p class="status-title">현재 발전</p>
+   		    <p class="status-graph" id="currentPowerGenerationChart"></p>
+   		    <p class="status-title">누적 발전량</p>
+   		    <p class="status-amount gray"><strong id="accumulatePower">0</strong> MWh</p>
+   		</div>
+   		<div class="status-box left">
+			<p class="status-title1">금일 발전량</p>
+			<p class="status-amount red"><strong id="todayPower">0</strong> kWh / <strong id="todayPowerHour">0</strong> hour</p>
+			<p class="status-title1 topline">전일 발전량</p>
+			<p class="status-amount gray"><strong id="previosDayPower">0</strong> kWh / <strong id="previosDayPowerHour">0</strong> hour</p>
+		</div>
+		<div class="status-box right">
+		    <p class="status-title1">금일 CO₂ 저감량</p>
+		    <p class="status-amount red"><strong id="currentCo2Power">0</strong> kg</p>
+			<p class="status-title1 topline">누적 CO₂ 저감량</p>
+			<p class="status-amount gray"><strong id="accumulateCo2Power">0.0</strong> ton</p>
+		</div>
+	  	<div class="inverter-box">
+	  		<div id="inverterChart" class="inverter-chart"></div>
+	  		<div class="inverter_scroll_title">인버터 상태</div>
+	  		<div class="inverter_scroll_head">
+	  			<ul>
+	  				<li>
+	  					<span class="name">인버터
+	  					</span><span class="status">상태
+	  					</span><span class="power">현재 발전
+	  					</span><span class="todayPower">금일 발전량
+	  					</span><span class="accumulatePower">누적 발전량
+	  					</span>
+	  				</li>
+	  			</ul>
+	  		</div>
+	  		<div id="inverter_scroll" class="inverter_scroll">
+		  		<ul>
+		  		</ul>
+		  	</div>
+	  	</div>
+	</div>
+</section>
+
+	
+	<footer>COPYRIGHT(C) DASSTECH.ALL RIGHT RESERVED, Version 1.0</footer>
+	<div id="file-upload-dialog" style="display: none;"></div>
+	<div id="loading-layer" class="loading-layer"></div>
+</body>
+</html>
