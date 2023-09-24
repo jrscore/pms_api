@@ -18,8 +18,9 @@ const database = {
     initializer: () => __awaiter(void 0, void 0, void 0, function* () {
         const db = yield mongoose_1.default.connect('mongodb+srv://jrscorenet:qkrekfskan@corecluster.q8okyvy.mongodb.net/mnt');
         if (process.env.NODE_ENV !== 'production') {
-            mongoose_1.default.set('debug', true);
+            // mongoose.set('debug', true);
         }
     })
 };
 exports.database = database;
+//# sourceMappingURL=database.js.map

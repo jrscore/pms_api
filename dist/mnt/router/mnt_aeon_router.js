@@ -14,21 +14,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = __importDefault(require("express"));
-const helper_1 = require("../../helper/helper");
-const mnt_aeon_service_1 = require("../service/mnt_aeon_service");
-const mnt_aeon_repository_1 = require("../repository/mnt_aeon_repository");
+const aeon_monit_service_1 = require("../service/aeon_monit_service");
+const aeon_monit_repository_1 = require("../repository/aeon_monit_repository");
 /*
-    api.coredex.kr/mnt/aeon/crt/
-    api.coredex.kr/mnt/aeon/day/
-    api.coredex.kr/mnt/aeon/mth/
+    api.coredex.kr/mnt/aeon/
+    api.coredex.kr/mnt/aeon/ts/			=> 최신 ts
+    api.coredex.kr/mnt/aeon/ts/{:day}	=> 특정일자 ts
+    api.coredex.kr/mnt/aeon/mth/{:date}	=> 특정월 mth
 */
 exports.router = express_1.default.Router();
-const repo = new mnt_aeon_repository_1.AeonMonitRepository();
-const service = new mnt_aeon_service_1.AeonMonitService(repo);
+const repo = new aeon_monit_repository_1.AeonRepository();
+const service = new aeon_monit_service_1.AeonMonitService(repo);
 // 현재 발전량
+// GET => api.coredex.kr/mnt/aeon/
 exports.router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        (0, helper_1.devLog)('라우터진입');
         const data = yield service.getCurrent();
         res.json(data);
     }
@@ -36,8 +36,9 @@ exports.router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).send(e.message);
     }
 }));
-// 데이ts - 시간별 dt get => list
-exports.router.get('mont/aeon/day', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// 최신 ts
+// GET => api.coredex.kr/mnt/aeon/ts/
+exports.router.get('/ts', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const date = new Date(req.query.date); // 예: query param으로 "2023-05-01"을 받습니다.
         const data = yield service.getDay(date);
@@ -48,7 +49,7 @@ exports.router.get('mont/aeon/day', (req, res) => __awaiter(void 0, void 0, void
     }
 }));
 // 월간ts - 일별마지막데이터 get => list
-exports.router.get('/mnt/aeon/mth', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.router.get('/mth', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const year = parseInt(req.query.year);
         const month = parseInt(req.query.month) - 1; // JavaScript의 month는 0부터 시작합니다.
@@ -59,3 +60,4 @@ exports.router.get('/mnt/aeon/mth', (req, res) => __awaiter(void 0, void 0, void
         res.status(500).send(error.message);
     }
 }));
+//# sourceMappingURL=mnt_aeon_router.js.map

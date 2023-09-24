@@ -1,14 +1,13 @@
-import mongoose from 'mongoose';
-import { Monit, monitModel } from './mongoose_model';
+import { Monit, aeonModel } from "./monit_model";
 
 
-
-export class MonitRepository {
+export class AeonRepository {
 
 	// 현재 데이터를 받아서 저장한다
 	async addlogs(monit: Monit): Promise<any> {
 		try {
-			const newdoc = await monitModel.create(monit);
+			const newdoc = await aeonModel.create(monit);
+			return newdoc;
 		} catch (error) {
 			throw new Error('Server Error');
 		}
@@ -17,7 +16,7 @@ export class MonitRepository {
 	// 최신 데이터를 받아온다
 	async getCurrent(): Promise<any> {
 		try {
-			const json = await monitModel.findOne().sort({ _id: -1 }).exec();
+			const json = await aeonModel.findOne().sort({ _id: -1 }).exec();
 			if (json) {
 				return json;
 			} else {
@@ -36,7 +35,7 @@ export class MonitRepository {
 			const start = new Date(date).setHours(0, 0, 0, 0)
 			const end = new Date(date).setHours(23, 59, 59, 999);
 
-			const json = await monitModel.findOne({
+			const json = await aeonModel.findOne({
 				date: {
 					$gte: start,
 					$lte: end

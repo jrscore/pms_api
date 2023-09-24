@@ -1,7 +1,7 @@
-import { IMeta } from "../repository/mnt_meta_repository";
-import { AbsCrawler } from "./crw_interface";
-import { CM_Crawler } from "./instance/cm";
-import { OCTO_Crawler } from "./instance/octo";
+import { Meta } from "../meta/meta_repository";
+import { ICrawller } from "./crw_interface";
+import { CM_Crawler } from "./machine/cm";
+import { OCTO_Crawler } from "./machine/octo";
 
 
 export class CrawlerFactory {
@@ -17,15 +17,15 @@ export class CrawlerFactory {
 		// 'WMS': WMS_Crawler,
 	}
 
-	public static async createCrawler(meta: IMeta): Promise<AbsCrawler> {
+	public static createCrawler(meta: Meta): Promise<ICrawller> {
 		if (!meta.model) {
 			throw new Error(`CRWALER Model NOT Match: ${meta.model}`);
 		}
 
-		const crawlerClass = CrawlerFactory.crawlerTypes[meta.model];
-		if (!crawlerClass) {
+		const crawlerAdapter = CrawlerFactory.crawlerTypes[meta.model];
+		if (!crawlerAdapter) {
 			throw new Error(`CRWALER Machine NOT INIT: ${meta.model}`);
 		}
-		return new crawlerClass()
+		return new crawlerAdapter(meta)
 	}
 }

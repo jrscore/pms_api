@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { devLog, generateTimeBasedOnNow, intParser, wait } from '../../../helper/helper';
-import { IMeta } from '../../repository/mnt_meta_repository';
-import { Grid, Inverter, Monit, PV, Vcb } from '../../repository/mongoose_model';
+import { devLog, generateTimeBasedOnNow, intParser, wait } from '../../helper/helper';
+import { Meta } from '../../meta/meta_repository';
+import { Grid, Inverter, Monit, PV, Vcb } from '../../mnt/repository/monit_model';
 
 
 
@@ -18,38 +18,24 @@ export class DNE_Crawler {
 		return !!this._token;
 	}
 
-	constructor(meta: IMeta) {
+	constructor(meta: Meta) {
 		this.url = meta.url
 		this.id = meta.id
 		this.pwd = meta.pwd
 		this.ax = axios.create({ baseURL: this.url, withCredentials: true });
-		const headers = {
-			// 'Accept': 'application/json, text/javascript, */*; q=0.01',
-			// 'Accept-Encoding': 'gzip, deflate',
-			// 'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-			// 'Connection': 'keep-alive',
-			// 'Host': 'www.cmsolar.kr',
-			// 'Referer': 'http://www.cmsolar.kr',
-			// 'X-Requested-With': 'XMLHttpRequest',
-			// 'Content-Type': 'application/x-www-form-urlencoded',
-			// 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36', // 변경된 User-Agent
-		};
+		const headers = {};
 	}
 
-	async fetch(): Promise<Monit> {
+	async fetch(): Promise<Monit | PV> {
 		try {
 			await this.login()
-			if (!this.isLogin) throw new Error("Token not set!");
+			if (!this.isLogin) throw new Error("Token => X");
 
-			await wait(3000)
-			const grid = await this.getGrid();
-			await wait(3000)
-			const vcb = await this.VCB();
 			await wait(3000)
 			const pv = await this.getPV();
 			await wait(3000)
 			this.logout()
-			return { pv, vcb, grid }
+			return pv
 		} catch (error) {
 			throw new Error("FETCH 실패");
 		}
@@ -156,14 +142,6 @@ export class DNE_Crawler {
 		}
 	}
 
-
-	async getGrid(): Promise<Grid | null> {
-		return null
-	}
-
-	async VCB(): Promise<Vcb| null> {
-		return null
-	}
 }
 
 

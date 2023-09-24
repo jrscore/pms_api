@@ -12,3 +12,4 @@ function getFormattedDate() {
     return `mnt_data_saved:${yy}.${mm}.${dd}-${hh}:${min}`;
 }
 exports.getFormattedDate = getFormattedDate;
+//# sourceMappingURL=formatter.js.map

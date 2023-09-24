@@ -1,44 +1,43 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { devLog,  intParser, wait } from '../../../helper/helper';
-import { IMeta } from '../../repository/mnt_meta_repository';
-import { Monit, PV, Inverter, Grid, Vcb } from '../../repository/mongoose_model';
+import axios, { AxiosInstance, AxiosStatic } from 'axios';
+import { devLog, intParser, wait } from '../../helper/helper';
+import { Meta } from '../../meta/meta_repository';
+import { Monit, PV, Inverter, Grid, Vcb } from '../../mnt/repository/monit_model';
+import { ICrawller } from '../crw_interface';
 
 
 
-export class CM_Crawler {
-	private url: string
-	private id: string
-	private pwd: string
-	private headers: { [key: string]: string } = {}
-	private sitecode = ''
-	private _token = ''
-	private cookie: string | null = null;
-	private ax: AxiosInstance;
+export class CM_Crawler implements ICrawller {
+	ax: AxiosInstance
+	url: string
+	id: string
+	pwd: string
+	headers: { [key: string]: string } = {}
+	payload: { [key: string]: string } = {}
+	_token = ''
+	sitecode = ''
+	cookie: string | null = null;
+
+	constructor(meta: Meta) {
+		console.log('cm crawler 생성')
+		this.id = meta.id
+		this.pwd = meta.pwd
+		this.url = meta.url
+		this.ax = axios.create({ baseURL: this.url, withCredentials: true });
+	}
+
 	get isLogin(): boolean {
 		return !!this._token;
 	}
 
-	constructor(meta: IMeta) {
-		this.url = meta.url
-		this.id = meta.id
-		this.pwd = meta.pwd
-		this.ax = axios.create({ baseURL: this.url, withCredentials: true });
-	}
 
 	async fetch(): Promise<Monit> {
 		try {
 			await this.login()
-			if (!this.isLogin) throw new Error("Token not set!");
-
-			await wait(3000)
-			const grid = await this.getGrid();
-			await wait(3000)
-			const vcb = await this.VCB();
-			await wait(3000)
+			await wait(1000)
 			const pv = await this.getPV();
-			await wait(3000)
+			await wait(1000)
 			this.logout()
-			return { pv, vcb, grid }
+			return { pv, grid: null, vcb: null }
 		} catch (error) {
 			throw new Error("FETCH 실패");
 		}
@@ -49,7 +48,7 @@ export class CM_Crawler {
 		this._token = ''
 	}
 
-	async login(): Promise<void> {
+	async login(): Promise<boolean> {
 		const headers = {
 			'Accept': 'application/json, text/javascript, */*; q=0.01',
 			'Accept-Encoding': 'gzip, deflate',
@@ -64,12 +63,12 @@ export class CM_Crawler {
 
 		try {
 			const payload = { id: this.id, password: this.pwd, }
-			devLog(payload)
 
 			// 2. URLSearchParams 객체를 사용하여 데이터 변환
-			const formData = new URLSearchParams();
-			formData.append('id', this.id);
-			formData.append('pw', this.pwd);
+			const formData = new URLSearchParams()
+			formData.append('id', this.id)
+			formData.append('pw', this.pwd)
+
 			const response = await this.ax.post('./login_ok.php', formData, { headers: headers })
 			devLog(response.data)
 			const cookie = response.headers['set-cookie']?.[0]?.split(';')[0];
@@ -77,32 +76,29 @@ export class CM_Crawler {
 				this._token = cookie;
 				devLog(`토큰: ${this._token}`)
 			}
+			return this.isLogin
 		} catch (error) {
-			console.error("로그인실패", error);
+			console.error("CM 로그인실패");
+			return false
 		}
 	}
 
 
 	async getPV(): Promise<PV> {
-		if (!this._token) {
-			throw new Error('Session cookie 실패');
+		if (!this.isLogin) {
+			throw new Error('CM: 토큰이 없습니다.');
 		}
 		try {
 			const headers = {
-				'Accept': 'application/json, text/javascript, */*; q=0.01',
-				'Accept-Encoding': 'gzip, deflate',
-				'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-				'Connection': 'keep-alive',
 				'Host': 'www.cmsolar.kr',
 				'Referer': 'http://www.cmsolar.kr/plant/',
 				'X-Requested-With': 'XMLHttpRequest',
 				'Cookie': this._token
 			};
-
 			devLog(headers)
+
 			const apiUrl = `./plant/sub/idx_ok.php?mode=getPlant`;
 			const response = await this.ax.get(apiUrl, { headers: { 'Cookie': this._token } })
-			devLog(response.data)
 			if (response.status === 200 && response.data?.[0]) {
 				const json = response.data?.[0]
 				return {
@@ -122,31 +118,17 @@ export class CM_Crawler {
 	}
 
 	async getInverter(json: any): Promise<Inverter[]> {
-		devLog(json)
-		try {
-			let invs: Inverter[] = json.map((inv: any, idx: number) => ({
-				no: idx + 1,
-				stt: true,
-				dcv: intParser(inv.pow_dcv),
-				dca: intParser(inv.pow_dca),
-				pwr: intParser(inv.pow_dcp),
-				day: intParser(inv.pow_today),
-				mth: intParser(inv.pow_thismonth),
-				yld: intParser(inv.pow_totalpower),
-			}))
-			return invs
-		} catch (error) {
-			throw new Error("ERR: INV");
-		}
-	}
-
-
-	async getGrid(): Promise<Grid | null> {
-		return null
-	}
-
-	async VCB(): Promise<Vcb | null> {
-		return null
+		let invs: Inverter[] = json.map((inv: any, idx: number) => ({
+			no: idx + 1,
+			stt: true,
+			dcv: intParser(inv.pow_dcv),
+			dca: intParser(inv.pow_dca),
+			pwr: intParser(inv.pow_dcp),
+			day: intParser(inv.pow_today),
+			mth: intParser(inv.pow_thismonth),
+			yld: intParser(inv.pow_totalpower),
+		}))
+		return invs
 	}
 }
 

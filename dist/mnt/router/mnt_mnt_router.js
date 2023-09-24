@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.router = void 0;
 const express_1 = __importDefault(require("express"));
-const mnt_mnt_service_1 = require("../service/mnt_mnt_service");
+const monit_service_1 = require("../service/monit_service");
 /*
     api.coredex.kr/mnt/
     
@@ -29,25 +29,26 @@ const mnt_mnt_service_1 = require("../service/mnt_mnt_service");
 exports.router = express_1.default.Router();
 // # api.coredex.kr/mnt/	=> getlist 전체사이트를 가져와서 fe에 보여준다
 exports.router.get('/mnt/:cid', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const service = new mnt_mnt_service_1.MonitService();
+    const service = new monit_service_1.MonitService();
     const data = yield service.fetchData();
     res.json(data);
 }));
 // 현재상태
 exports.router.get('/mnt/crt/:sid', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const service = new mnt_mnt_service_1.MonitService();
+    const service = new monit_service_1.MonitService();
     const data = yield service.fetchData();
     res.json(data);
 }));
 // 금일리스트
 exports.router.get('/mnt/day/:sid', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const service = new mnt_mnt_service_1.MonitService();
+    const service = new monit_service_1.MonitService();
     const data = yield service.fetchData();
     res.json(data);
 }));
 // 금월리스트
 exports.router.get('/mnt/mth/:sid', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const service = new mnt_mnt_service_1.MonitService();
+    const service = new monit_service_1.MonitService();
     const data = yield service.fetchData();
     res.json(data);
 }));
+//# sourceMappingURL=mnt_mnt_router.js.map

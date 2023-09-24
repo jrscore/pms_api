@@ -1,24 +1,40 @@
-import { Monit, aeonModel } from "./mongoose_model";
+import mongoose from 'mongoose';
+import { Monit, PV, monitModel } from './monit_model';
 
 
-export class AeonMonitRepository {
+
+export class MonitRepository {
 
 	// 현재 데이터를 받아서 저장한다
-	async addlogs(monit: Monit): Promise<any> {
+	async save(mnt: Monit): Promise<any> {
 		try {
-			const newdoc = await aeonModel.create(monit);
-			return newdoc;
+			const newdoc = await monitModel.create(mnt);
 		} catch (error) {
-			throw new Error('Server Error');
+			console.error('monit repo - save error', error);
 		}
 	}
 
+	// // 특정사이트 최신 데이터를 받아온다
+	// async getCurrent(): Promise<any> {
+	// 	try {
+	// 		const json = await monitModel.findOne().sort({ _id: -1 }).exec();
+	// 		if (json) {
+	// 			return json;
+	// 		} else {
+	// 			throw new Error('REPO: Document not found');
+	// 		}
+	// 	} catch (error) {
+	// 		throw new Error('REPO: Server Error');
+	// 	}
+	// }
+
 	// 최신 데이터를 받아온다
-	async getCurrent(): Promise<any> {
+	async getByCorp(corp:string): Promise<Monit[]> {
 		try {
-			const json = await aeonModel.findOne().sort({ _id: -1 }).exec();
-			if (json) {
-				return json;
+			
+			const monit_arr = await monitModel.find({ corp: corp }).sort({ _id: -1 })
+			if (monit_arr) {
+				return monit_arr;
 			} else {
 				throw new Error('REPO: Document not found');
 			}
@@ -35,7 +51,7 @@ export class AeonMonitRepository {
 			const start = new Date(date).setHours(0, 0, 0, 0)
 			const end = new Date(date).setHours(23, 59, 59, 999);
 
-			const json = await aeonModel.findOne({
+			const json = await monitModel.findOne({
 				date: {
 					$gte: start,
 					$lte: end

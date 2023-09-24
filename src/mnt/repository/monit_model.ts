@@ -1,5 +1,20 @@
 import mongoose from 'mongoose';
 
+/*
+일반모니터링 시나리오
+ - meta collection에서 데이터를 이용하여 deamon을 구동
+ - meta 리스트를 fe에 전달
+ - meta 리스트를 api fetch
+
+collection 구성
+#1. monit
+	- log  		: suid, dt(yymmdd-hhmm)
+	- ts  		: suid, dt
+	- day  		: suid, dt
+	- mth  		: suid, dt
+*/
+
+
 const gridSchema = new mongoose.Schema({
 	time: Date,
 	inmth: Number,

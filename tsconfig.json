@@ -7,7 +7,9 @@
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
+		"sourceMap": true,
 		"forceConsistentCasingInFileNames": true	// 대소문자구분, cross platform
+
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules"]

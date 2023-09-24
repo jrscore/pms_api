@@ -35,7 +35,7 @@ class AeonMonitService {
     crawlingData() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log("Initialization started at:", new Date());
+                console.log("크롤링시작=>:", new Date());
                 // #1. 몽구스에서 받아온 메타데이터를 토대로 크롤러 생성	
                 if (this.meta || this.crawler) {
                     const monit = yield this.crawler.fetch();

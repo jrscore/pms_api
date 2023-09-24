@@ -2,9 +2,10 @@
   "name": "pms_api",
   "version": "1.0.0",
   "description": "",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "NODE_ENV=development nodemon --exec ts-node ./src/server.ts",
-    "prd": "NODE_ENV=production  tsc && pm2 start ./dist/server.js --name 'pms_api' "
+    "dev": "NODE_ENV=development ts-node ./src/server.ts",
+    "prd": "tsc && pm2 start ./dist/server.js --name 'pms_api' "
   },
   "keywords": [],
   "author": "",

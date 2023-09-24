@@ -1,5 +1,5 @@
 import express from 'express';
-import { MonitService } from '../service/mnt_mnt_service';
+import { MonitService } from '../service/monit_service';
 
 /*
 	api.coredex.kr/mnt/

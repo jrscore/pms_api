@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
-import { devLog, generateTimeBasedOnNow, intParser, wait } from '../../../helper/helper';
-import { IMeta } from '../../repository/mnt_meta_repository';
-import { Grid, Inverter, Monit, PV, Vcb } from '../../repository/mongoose_model';
+import { devLog, generateTimeBasedOnNow, intParser, wait } from '../../helper/helper';
+import { Meta } from '../../meta/meta_repository';
+import { Grid, Inverter, Monit, PV, Vcb } from '../../mnt/repository/monit_model';
 
 
 export class OCTO_Crawler {
@@ -17,7 +17,8 @@ export class OCTO_Crawler {
 		return !!this._token;
 	}
 
-	constructor(meta: IMeta) {
+	constructor(meta: Meta) {
+		console.log("OCTO_Crawler 생성")
 		this.url = meta.url
 		this.id = meta.id
 		this.pwd = meta.pwd
@@ -31,7 +32,7 @@ export class OCTO_Crawler {
 
 	async fetch(): Promise<Monit> {
 		try {
-			if (!this.isLogin){
+			if (!this.isLogin) {
 				await this.login()
 			}
 			await wait(3000)
