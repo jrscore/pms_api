@@ -36,7 +36,7 @@ exports.router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).send(e.message);
     }
 }));
-// 최신 ts
+// 추후 ts
 // GET => api.coredex.kr/mnt/aeon/ts/
 exports.router.get('/ts', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -48,7 +48,7 @@ exports.router.get('/ts', (req, res) => __awaiter(void 0, void 0, void 0, functi
         res.status(500).send(e.message);
     }
 }));
-// 월간ts - 일별마지막데이터 get => list
+// day - 일별마지막데이터 get => list
 exports.router.get('/mth', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const year = parseInt(req.query.year);

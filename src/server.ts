@@ -44,7 +44,7 @@ async function main() {
 	});
 
 	// 크롤링 데몬
-	await CrawllingService.aeonDeamon('*/1 7-20 * * *', 'aeon')	//crawlling deamon
+	// await CrawllingService.aeonDeamon('*/1 7-20 * * *', 'aeon')	//crawlling deamon
 	// await CrawllingService.dailyDeamon('0 20 * * *')					//daily deamon
 	// await CrawllingService.aeonDeamon('0 8,11,12,13,20 * * *');
 }

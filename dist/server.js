@@ -20,7 +20,6 @@ const mnt_mnt_router_1 = require("./mnt/router/mnt_mnt_router");
 const mnt_aeon_router_1 = require("./mnt/router/mnt_aeon_router");
 const mnt_meta_router_1 = require("./mnt/router/mnt_meta_router");
 const helper_1 = require("./helper/helper");
-const crw_server_1 = require("./crawller/crw_server");
 /*
 api.coredex.kr/mnt/
 api.coredex.kr/mnt/meta/
@@ -28,8 +27,8 @@ api.coredex.kr/mnt/aeon/
 */
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        // 배포시 => .env
-        // dev시 => .env.development
+        // development.env
+        // .env
         const envPath = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
         dotenv_1.default.config({ path: envPath });
         // # DB 초기화
@@ -47,7 +46,7 @@ function main() {
             console.log(`Server RUN =>  http://localhost:${PORT}`);
         });
         // 크롤링 데몬
-        yield crw_server_1.CrawllingService.aeonDeamon('*/1 * * * *', 'aeon'); //crawlling deamon
+        // await CrawllingService.aeonDeamon('*/1 7-20 * * *', 'aeon')	//crawlling deamon
         // await CrawllingService.dailyDeamon('0 20 * * *')					//daily deamon
         // await CrawllingService.aeonDeamon('0 8,11,12,13,20 * * *');
     });
