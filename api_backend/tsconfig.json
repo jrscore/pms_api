@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"target": "ES6",
+		"module": "commonjs",
+		"outDir": "./dist",
+		"rootDir": "./app",
+		"sourceMap": true,	//디버깅소스맵 생성
+		"strict": true,
+		"esModuleInterop": true,
+		"noImplicitAny": false,
+		"resolveJsonModule": true
+	},
+
+	"include": ["app"],
+
+	"exclude": ["node_modules"]
+}

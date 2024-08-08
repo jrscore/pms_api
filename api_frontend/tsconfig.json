@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2016",											// js version
+    "module": "commonjs",	
+		"moduleResolution": "node",
+    "esModuleInterop": true,								// import common modules as ES6 Modules
+		"allowSyntheticDefaultImports": true,		// support typesystem compatibility
+		"resolveJsonModule": true,              // json imports
+
+
+		"outDir": "dist",
+		"rootDir": "src",
+
+		"strict": true,
+		"sourceMap": true,
+    "skipLibCheck": false,					// 스킵 typechecking  .d.ts
+    "noUnusedLocals": false,
+    "noImplicitReturns": false,
+  },
+
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"]
+}

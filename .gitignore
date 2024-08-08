@@ -1,0 +1,28 @@
+# Node modules
+dist/
+node_modules/
+.vscode/
+.DS_Store
+
+# Secret environment variables
+.env
+.env.local
+.env.*.local
+app.yaml
+serviceAccountKey.json
+
+# Firebase and Google Cloud service account keys
+serviceAccountKey.json
+firebase-adminsdk-*.json
+
+# Firebase
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+
+# IDE/Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
