@@ -31,10 +31,10 @@ const axiosService = wrapper(axios.create({
 	xsrfCookieName: 'XSRF-TOKEN',
 	xsrfHeaderName: 'X-Csrf-Token',
 	jar: new CookieJar()
-}));
+}))
 
 export class LaseeBot implements Bot {
-	private url: string = '';
+	private url: string = ''
 	private sites: ISiteInfo[]
 
 	constructor(sites:ISiteInfo[]){
@@ -44,24 +44,24 @@ export class LaseeBot implements Bot {
 
 
 	async initialize() {
-		const model = await getMonitModel('lasee');
+		const model = await getMonitModel('lasee')
 		if (model) {
-			this.url = model.url;
+			this.url = model.url
 		}
-		axiosService.defaults.baseURL = this.url;
+		axiosService.defaults.baseURL = this.url
 	}
 
 	async crawlling(): Promise<IGrid[]> {
-		await this.login();
+		await this.login()
 
-		const monitoring: IGrid[] = [];
+		const monitoring: IGrid[] = []
 
 		for (const info of this.sites!) {
-			const invs = await this.getInverter(info.code);
-			const power = invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0);
-			const dayyld = invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0);
+			const invs = await this.getInverter(info.code)
+			const power = invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0)
+			const dayyld = invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0)
 
-			console.log(invs);
+			console.log(invs)
 			
 
 			// monitoring.push({
@@ -72,7 +72,7 @@ export class LaseeBot implements Bot {
 			// });
 		}
 
-		return monitoring;
+		return monitoring
 	}
 
 	async login(): Promise<void> {

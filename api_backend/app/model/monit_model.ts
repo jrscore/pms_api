@@ -5,7 +5,7 @@ export interface ISiteInfo {
 	code: 	string		// 발전소 코드
 	id: 		string
 	pwd: 		string
-	memo:		string
+	memo:		string | { [key: string]: any }
 	model:	string
 }
 

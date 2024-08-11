@@ -26,15 +26,9 @@ export class OctoBot implements Bot {
 
 	async initialize(cid:string) {
 
-		// this.model = await getMonitModel('octo') ?? this.model
-		// this.sites = await getSiteInfos(cid, 'octo')
-
-		const modelResult = await getMonitModel('octo')
-		this.model = modelResult ?? this.model
-
-		const siteInfos = await getSiteInfos(cid, 'octo')
-		this.sites = siteInfos
-
+		this.model = await getMonitModel('octo') ?? this.model
+		this.sites = await getSiteInfos(cid, 'octo')
+		//const modelResult = await getMonitModel('octo');this.model = modelResult ?? this.model;const siteInfos = await getSiteInfos(cid, 'octo');this.sites = siteInfos
 		this.payload = {
 			userId: 	this.sites[0].id,
 			userPass:	this.sites[0].pwd.toString(),
@@ -51,7 +45,6 @@ export class OctoBot implements Bot {
 	async crawlling (): Promise<IGrid[]> {
 			
 		await this.login()
-		
 		const monitoring: IGrid[] = []
 
 		for (const info of this.sites!) {
@@ -66,7 +59,6 @@ export class OctoBot implements Bot {
 				invs: invs
 			})
 		}
-
 		return monitoring
 	}
 

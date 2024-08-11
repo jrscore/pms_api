@@ -91,5 +91,30 @@ export const uploadBatchMonitInfo = async(dummy:any[]) => {
 	} catch (error) {
 		console.error('Error deleting document: ', error)
 	}
-
 }
+
+
+
+export async function deleteDocumentsByField() {
+  const collectionName = 'monit'; // 컬렉션 이름
+  const fieldName = 'model';                   // 일치시킬 필드 이름
+  const fieldValue = 'en';                // 일치시킬 필드 값
+
+  const collectionRef = db.collection(collectionName);
+  const querySnapshot = await collectionRef.where(fieldName, '==', fieldValue).get();
+
+  if (querySnapshot.empty) {
+    console.log('No matching documents found.');
+    return;
+  }
+
+  const batch = db.batch();
+
+  querySnapshot.forEach((doc) => {
+    batch.delete(doc.ref);
+  });
+
+  await batch.commit();
+  console.log('Matching documents have been deleted.');
+}
+
