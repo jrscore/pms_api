@@ -22,9 +22,9 @@ export interface Bot {
 export class BotFactory {
 	static getBot(model: string): Bot {
 		switch (model) {
-			case 'octo':	return new OctoBot()
 			case 'hd':		return new HdBot()
 			case 'cm':		return new CmBot()
+			case 'octo':	return new OctoBot()
 			case 'dass':	return new DassBot()
 			case 'eco':		return new EcoBot()
 			case 'rems':	return new RemsBot()

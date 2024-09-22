@@ -115,7 +115,7 @@ export class CmBot implements Bot {
 			return json.map((inv: any, idx: number) => ({
 				no: idx + 1,
 				run: this.convertRunStatus(inv.dev_stat2), // 'dev_stat2' 값을 사용하여 상태 변환
-				pwr: Math.floor(inv.pow_totalpower),      // 'pow_totalpower'를 사용하여 출력 전력 변환
+				pwr: Math.floor(inv.pow_ac_p),      // 'pow_totalpower'를 사용하여 출력 전력 변환
 				day: Math.floor(inv.pow_today),           // 'pow_today'를 사용하여 일일 전력 변환
 				yld: Math.floor(inv.pow_thisyear)         // 'pow_thisyear'를 사용하여 연간 전력 변환
 			}))

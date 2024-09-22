@@ -6,9 +6,9 @@ import { deleteDocumentsByField, uploadBatchMonitInfo } from './firebase/r_site_
 import { ensearch_dummy } from './dummy_data'
 
 
-// # SERVER	ENTRY
+// # LOCAL MACHINE
 
-const pubsub = new PubSub()
+export const pubsubService = new PubSub()
 
 const subscriptions = [
   { name: 'monit-sub', 	handler: mntHandler },
@@ -17,10 +17,12 @@ const subscriptions = [
 ]
 
 subscriptions.forEach(sub => {
-  const subscription: Subscription = pubsub.subscription(sub.name)
+  const subscription: Subscription = pubsubService.subscription(sub.name)
   subscription.on('message', sub.handler)
   subscription.on('error', (error) => console.error(`Subscription error (${sub.name}):`, error))
 })
+
+
 
 
 

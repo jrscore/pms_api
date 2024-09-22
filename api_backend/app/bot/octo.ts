@@ -45,21 +45,21 @@ export class OctoBot implements Bot {
 	async crawlling (): Promise<IGrid[]> {
 			
 		await this.login()
-		const monitoring: IGrid[] = []
+		const gridResult: IGrid[] = []
 
 		for (const info of this.sites!) {
 			const invs = await this.getInverter(info.code)
 			const power = invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0)
 			const dayyld = invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0)
 
-			monitoring.push({
+			gridResult.push({
 				alias: info.alias,
 				pwr: power,
 				day: dayyld,
 				invs: invs
 			})
 		}
-		return monitoring
+		return gridResult
 	}
 
 
@@ -98,9 +98,9 @@ export class OctoBot implements Bot {
 			return json.map((inv: any, idx: number) => ({
 				no:  idx + 1,
 				run: inv.isRun,
-				pwr: Math.floor(inv.pwr),
-				day: Math.floor(inv.day),
-				yld: Math.floor(inv.yld)
+				pwr: Math.floor(0),//(inv.ackw),
+				day: Math.floor(0),//(inv.dayTotal),
+				yld: Math.floor(0),//(inv.total)
 			}))
 		} catch (error) {
 			throw new Error(error as string)
