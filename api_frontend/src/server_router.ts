@@ -3,37 +3,34 @@ import express from "express"
 // type
 import { addCard, deleteCard, getCard } from "./usecase/card/card"
 import { jwtMiddleware } from "./services/author"
-import { getByModel } from "./usecase/monit/get_by_model"
-import { getByManager } from "./usecase/monit/get_by_manager"
-import { getBySite } from "./usecase/monit/get_by_site"
+import { modelCrawlling } from "./usecase/monit/model_crawlling"
+import { managerCrawlling } from "./usecase/monit/get_by_manager"
+import { siteCrawlling } from "./usecase/monit/site_crawlling"
 
 export const mntRouter 	= express.Router()
 export const cardRouter = express.Router()
 export const authRouter = express.Router()
 
 
-
+//https://monit-service-dot-cdx-pms.du.r.appspot.com/mnt/model/octo?cid=DJFp5mQmPfEXQFZRyIc0
 //  API.COREDEX.KR/mnt/xxx/xxxx ? cid=yyyy
-mntRouter.get('/model/:model',	jwtMiddleware, getByModel)
-mntRouter.get('/mng/:model',		jwtMiddleware, getByManager)
-mntRouter.get('/site/:model',		jwtMiddleware, getBySite)
+mntRouter.get('/model/:model',	jwtMiddleware, modelCrawlling)
+mntRouter.get('/mng/:model',		jwtMiddleware, managerCrawlling)
+mntRouter.get('/site/:model',		jwtMiddleware, siteCrawlling)
 
 
-// MONIT_MODEL CRUD
-mntRouter.post		('/mng/model/', 		jwtMiddleware, ()=>null )	
-mntRouter.get			('/mng/model/:mid', jwtMiddleware, ()=>null )	
-mntRouter.put			('/mng/model/:mid', jwtMiddleware, ()=>null )	
-mntRouter.delete	('/mng/model/:mid', jwtMiddleware, ()=>null )	
+mntRouter.post		('/config/model/',			jwtMiddleware, ()=>null )		
+mntRouter.get			('/config/model/:mid',	jwtMiddleware, ()=>null )	
+mntRouter.put			('/config/model/:mid',	jwtMiddleware, ()=>null )	
+mntRouter.delete	('/config/model/:mid',	jwtMiddleware, ()=>null )	
 
-
-// SITE_INFO CRUD
-mntRouter.post		('/mng/info/', 			jwtMiddleware, ()=>null )	
-mntRouter.get			('/mng/info/:sid',	jwtMiddleware, ()=>null )	
-mntRouter.put			('/mng/info/:sid',	jwtMiddleware, ()=>null )	
-mntRouter.delete	('/mng/info/:sid',	jwtMiddleware, ()=>null )	
+mntRouter.post		('/config/site/',				jwtMiddleware, ()=>null )	
+mntRouter.get			('/config/site/:sid',		jwtMiddleware, ()=>null )	
+mntRouter.put			('/config/site/:sid',		jwtMiddleware, ()=>null )	
+mntRouter.delete	('/config/site/:sid',		jwtMiddleware, ()=>null )	
 
 
 // CARRD
-cardRouter.get		('/card/:cid',		jwtMiddleware, getCard )
-cardRouter.post		('/card',					jwtMiddleware, addCard )
-cardRouter.delete	('/card/:id', 		jwtMiddleware, deleteCard )
+// cardRouter.get		('/card/:cid',		jwtMiddleware, getCard )
+// cardRouter.post		('/card',					jwtMiddleware, addCard )
+// cardRouter.delete	('/card/:id', 		jwtMiddleware, deleteCard )

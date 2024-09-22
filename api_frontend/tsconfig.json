@@ -7,7 +7,6 @@
 		"allowSyntheticDefaultImports": true,		// support typesystem compatibility
 		"resolveJsonModule": true,              // json imports
 
-
 		"outDir": "dist",
 		"rootDir": "src",
 

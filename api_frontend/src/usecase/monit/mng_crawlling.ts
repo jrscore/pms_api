@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import PubSubService from '../../services/pubsub'
-import MonitModelRepository from '../../repository/r_model_info'
+import MonitModelRepository from '../../repository/r_mnt_model'
 import { v4 as uuidv4 } from 'uuid'
 
 
@@ -8,7 +8,7 @@ interface ResultType { code: number, data: any }
 
 
 // # ~/mnt/mng/:model ? cid=xxxx & cid=xxxx
-export const getByManager = async (req: Request, res: Response) => {
+export const managerCrawlling = async (req: Request, res: Response) => {
 
 	const model = req.params.model
 	const cid = req.query.cid
@@ -21,11 +21,11 @@ export const getByManager = async (req: Request, res: Response) => {
 	const success: ResultType = { code: 200, data: { model: model, cid } }
 	const fail: ResultType = { code: 400, data: { msg: '모델별 모니터링 실패' } }
 
-	const pubsub = new PubSubService('monit', 'response-sub')
+	const pubsub = PubSubService.getInstance('monit', 'response-sub')
 	try {
 		await pubsub.publish(msg)
 		console.log('PSUB MSG_ID =>', task)
-		const result = await pubsub.waitForResponse(task)
+		const result = await pubsub.response(task)
 		res.status(200).send(result)
 	} catch (error) {
 		fail.data.msg = (error as Error).message
