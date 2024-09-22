@@ -1,8 +1,5 @@
 import { BotFactory } from './bot/factory'
-import { getSiteInfos as getSiteInfos } from './firebase/r_site_info'
-import { gwtest } from './bot/gw'
 import { Message, PubSub } from '@google-cloud/pubsub'
-import { ISiteInfo } from './model/monit_model'
 
 
 
@@ -20,7 +17,6 @@ export const mntHandler = async (message: Message) => {
 
 	const psub = new PubSub()
 	try {
-
 
 		const bot = BotFactory.getBot(model)
 		await bot.initialize(cid)

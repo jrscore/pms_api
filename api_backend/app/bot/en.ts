@@ -35,21 +35,22 @@ export class EnsearchBot implements Bot {
 	}
 
 
+	//1회로그인 후 fetching
 	async crawlling(): Promise<IGrid[]> {
 
 		const gridList: IGrid[] = []
 
+		await this.login(this.sites[0].id, this.sites[0].pwd)
 		for (const site of this.sites) {
-			await this.login(site.id, site.pwd)
 			const invs = await this.getInverter(site.code)
 			gridList.push({
 				alias: site.alias,
-				pwr: invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0),
-				day: invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0),
+				pwr: invs.reduce((sum, inv) => sum + inv.pwr, 0),
+				day: invs.reduce((sum, inv) => sum + inv.day, 0),
 				invs: invs,
 			})
-			await this.logout()
 			}
+		await this.logout()
 		return gridList
 	}
 
@@ -71,13 +72,11 @@ export class EnsearchBot implements Bot {
 	async getInverter(code:string): Promise<IInverter[]> {	
 		try {
 			const response = await this.Axios.post(this.apiUrl, {'field':code})
-			console.log(response.data)
-			
 			return response.data.map((inv: any, idx: number) => ({
 				no:  idx + 1,
 				run: inv.fault,
-				pwr: Math.floor(inv.energy),
-				day: Math.floor(inv.now_energy),
+				pwr: Math.floor(inv.now_energy),
+				day: Math.floor(inv.energy),
 				yld: 0
 			}))
 		} catch (error) {
