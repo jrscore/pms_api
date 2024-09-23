@@ -10,8 +10,8 @@ interface ResultType { code: number, data: any }
 // # ~/mnt/mng/ model ? cid=xxxx
 export const modelCrawlling = async (req: Request, res: Response) => {
 
-	const model = req.params.model
 	const cid = req.query.cid
+	const model = req.params.model
 	const taskid = uuidv4()
 
 	const validModels = ['cm', 'octo', 'hd', 'dass', 'eco', 'rems', 'en']

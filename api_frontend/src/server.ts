@@ -3,6 +3,7 @@ import express from "express"
 import { authRouter, cardRouter, mntRouter } from "./server_router"
 import dotenv from "dotenv"
 import debug from "debug"
+import cors from "cors"
 
 
 // # 환경변수	: App Engine 			app.yaml
@@ -14,19 +15,21 @@ import debug from "debug"
 
 
 
-dotenv.config()						//env로드
+// dotenv.config()						//env로드
 const log = debug('app')	//로거생성
-
 
 const app = express()
 const port = process.env.PORT || 8080
 const secret = process.env.SECRET_KEY	//추후구현
 
+// CORS
+const corsOption:cors.CorsOptions = {
+	origin: ['https://cdx-pms.web.app', 'http://localhost:3000'],
+	optionsSuccessStatus: 200
+}
+app.use(cors(corsOption))
 
-//	CORS 처리
-// const corsOrigin = process.env.NODE_ENV === "dev" ? ["http://localhost:3000"] : [""]
-// app.use(cors({ origin: corsOrigin }))									
-// app.use(cors({ credentials: true, origin: corsOrigin }))
+
 
 
 app.use(express.json())																// Content-Type이 "application/json"인 요청에서 req.body에 접근

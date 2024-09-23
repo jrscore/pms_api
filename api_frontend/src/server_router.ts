@@ -4,7 +4,7 @@ import express from "express"
 import { addCard, deleteCard, getCard } from "./usecase/card/card"
 import { jwtMiddleware } from "./services/author"
 import { modelCrawlling } from "./usecase/monit/model_crawlling"
-import { managerCrawlling } from "./usecase/monit/get_by_manager"
+import { managerCrawlling } from "./usecase/monit/mng_crawlling"
 import { siteCrawlling } from "./usecase/monit/site_crawlling"
 
 export const mntRouter 	= express.Router()

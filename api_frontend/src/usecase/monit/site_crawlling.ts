@@ -21,14 +21,5 @@ export const siteCrawlling = async (req: Request, res: Response) => {
 	const success: ResultType = { code: 200, data: { model: model, cid } }
 	const fail: ResultType = { code: 400, data: { msg: '모델별 모니터링 실패' } }
 
-	// const pubsub = new PubSubService('monit', 'response-sub')
-	// try {
-	// 	await pubsub.publish(msg)
-	// 	console.log('PSUB MSG_ID =>', task)
-	// 	const result = await pubsub.waitForResponse(task)
-	// 	res.status(200).send(result)
-	// } catch (error) {
-	// 	fail.data.msg = (error as Error).message
-	// 	res.status(500).send(fail)
-	// }
+
 }

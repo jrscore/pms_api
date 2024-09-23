@@ -1,7 +1,4 @@
-# justify 변경
-# kesco 구현
-# keea 구현
-# kepco 구현
+# TODO: justify, kesco, keea, kepco
 
 
 # APP ENGINE
@@ -14,5 +11,5 @@
 	- 필수: app.yaml, package.json, package.lock.json, npm run start 명령어
 	- gcloud app deploy => CloudStorage 업로드  ->  CloudBuild  실행  ->  AppEngine  배포
 	- .gcloud ignore
-	- 버전지정: gcloud app deploy --version v1
+	- 버전지정: 0923
 
