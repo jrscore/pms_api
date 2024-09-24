@@ -1,12 +1,12 @@
 import axios from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
+import { Inverter, GridData } from '../model/grid'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
-import { ISiteInfo, MonitModel } from '../model/monit_model'
+import { SiteInfo, MonitModel } from '../model/monit_model'
 import { JsonDoc } from '../model/jsondoc'
 import { getMonitModel } from '../firebase/r_mnt_model'
-import { getSiteInfos } from '../firebase/r_site_info'
+import { getSiteList } from '../firebase/r_site_info'
 import * as cheerio from 'cheerio'
 
 
@@ -37,16 +37,16 @@ export class MrtBot implements Bot {
 	private loginUrl = `https://solar.mrt.co.kr/api/member/login`	
 	private logoutUrl = `http://www.solar.mrt.co.kr/index.php?PID=9902`	
 	private apiUrl = `https://solar.mrt.co.kr/api/measurement?deviceUid=null`	
-	private sites: ISiteInfo[] = []
-	private gridList: IGrid[] = []
+	private sites: SiteInfo[] = []
+	private gridList: GridData[] = []
 
 
 	async initialize(cid:string) {
-		this.sites = await getSiteInfos(cid, 'mrt')// this.model = await getMonitModel('dass') ?? this.model
+		this.sites = await getSiteList(cid, 'mrt')// this.model = await getMonitModel('dass') ?? this.model
 	}
 
 
-	async crawlling(): Promise<IGrid[]> {
+	async crawlling(): Promise<GridData[]> {
 		for (const site of this.sites) {
 			if (typeof site.memo === 'object' && site.memo !== null) {
 				await this.login(site.memo.id, site.memo.pwd)
@@ -86,12 +86,12 @@ export class MrtBot implements Bot {
 	}
 
 
-	async getInverter(): Promise<IInverter[]> {
+	async getInverter(): Promise<Inverter[]> {
 		try {
 			const response = await Axios.get(this.apiUrl)
 			const $ = cheerio.load(response.data)
 
-			const invs: IInverter[] = $('table.se_list1 tbody tr').map((idx, el) => {
+			const invs: Inverter[] = $('table.se_list1 tbody tr').map((idx, el) => {
 				return {
 					no:  parseInt( $(el).find('td').eq(0).text().trim(), 10),
 					pwr: parseInt( $(el).find('td').eq(4).text().trim(), 10),

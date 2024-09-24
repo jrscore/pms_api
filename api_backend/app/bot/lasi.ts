@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
-import { ISiteInfo } from '../model/monit_model'
+import { Inverter, GridData } from '../model/grid'
+import { SiteInfo } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
@@ -35,9 +35,9 @@ const axiosService = wrapper(axios.create({
 
 export class LaseeBot implements Bot {
 	private url: string = ''
-	private sites: ISiteInfo[]
+	private sites: SiteInfo[]
 
-	constructor(sites:ISiteInfo[]){
+	constructor(sites:SiteInfo[]){
 		this.sites = sites
 		this.initialize()
 	}
@@ -51,10 +51,10 @@ export class LaseeBot implements Bot {
 		axiosService.defaults.baseURL = this.url
 	}
 
-	async crawlling(): Promise<IGrid[]> {
+	async crawlling(): Promise<GridData[]> {
 		await this.login()
 
-		const monitoring: IGrid[] = []
+		const monitoring: GridData[] = []
 
 		for (const info of this.sites!) {
 			const invs = await this.getInverter(info.code)
@@ -90,7 +90,7 @@ export class LaseeBot implements Bot {
 		}
 	}
 
-	async getInverter(code: string): Promise<IInverter[]> {
+	async getInverter(code: string): Promise<Inverter[]> {
 		try {
 			const apiUrl = `${this.url}/plant/${code}/966/inverter_status/data`;
 			console.log(apiUrl);

@@ -1,7 +1,7 @@
-import { IGrid } from "../model/grid"
+import { GridData } from "../model/grid"
 
 
-export function gwParser(json: any): IGrid[] {
+export function gwParser(json: any): GridData[] {
 	return json.data.list.map((station: any) => ({
 		alias: station.stationname,
 		pwr: station.pac,

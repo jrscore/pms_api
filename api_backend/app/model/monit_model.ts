@@ -1,5 +1,5 @@
 
-export interface ISiteInfo {
+export interface SiteInfo {
 	cid: 		string		// 업체 아이디
 	alias:	string		// 발전소 명칭
 	code: 	string		// 발전소 코드

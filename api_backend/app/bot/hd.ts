@@ -1,12 +1,12 @@
 import axios from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
-import { ISiteInfo, MonitModel } from '../model/monit_model'
+import { Inverter, GridData } from '../model/grid'
+import { SiteInfo, MonitModel } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
 import { JsonDoc } from '../model/jsondoc'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
-import { getSiteInfos } from '../firebase/r_site_info'
+import { getSiteList } from '../firebase/r_site_info'
 
 export class HdBot implements Bot {
 
@@ -14,7 +14,7 @@ export class HdBot implements Bot {
 	
 	private payload: JsonDoc | undefined
 	private model: MonitModel = {} as MonitModel
-	private sites: ISiteInfo[] = []
+	private sites: SiteInfo[] = []
 
 	private headers = {
 			'Host': 'hs3.hyundai-es.co.kr',
@@ -46,7 +46,7 @@ export class HdBot implements Bot {
 
 	async initialize(cid:string) {
 		this.model = await getMonitModel('hd') ?? this.model
-		this.sites = await getSiteInfos(cid, 'hd')
+		this.sites = await getSiteList(cid, 'hd')
 		this.payload = {
 			user_id:  this.sites[0].id,
 			password: this.sites[0].pwd.toString(),
@@ -54,9 +54,9 @@ export class HdBot implements Bot {
 	}
 
 
-	async crawlling(): Promise<IGrid[]> {
+	async crawlling(): Promise<GridData[]> {
 		await this.login()
-		const monitoring: IGrid[] = []
+		const monitoring: GridData[] = []
 
 		for (const info of this.sites!) {
 			const invs = await this.getInverter(info.code)
@@ -84,7 +84,7 @@ export class HdBot implements Bot {
 	}
 
 
-	async getInverter(sitecode: string): Promise<IInverter[]> {
+	async getInverter(sitecode: string): Promise<Inverter[]> {
 		try {
 			const apiUrl = `${this.model.url}/hismart/monitoring/site/${sitecode}/inverter`
 			const response = await this.ax.get(apiUrl, {

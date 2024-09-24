@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { generateTimeBasedOnNow } from '../utils/util'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
+import { Inverter, GridData } from '../model/grid'
 
 
 export class ObBot implements Bot {
@@ -37,7 +37,7 @@ export class ObBot implements Bot {
 	}
 
 	
-	async crawlling(): Promise<IGrid[]> {
+	async crawlling(): Promise<GridData[]> {
 			
 		await this.login()
 		const invs = await this.getInverter()
@@ -72,7 +72,7 @@ export class ObBot implements Bot {
 	}
 
 
-	async getInverter(): Promise<IInverter[]> {
+	async getInverter(): Promise<Inverter[]> {
 		try {
 			const apiUrl = `${this.url}/inverter/data`
 			const payload = {

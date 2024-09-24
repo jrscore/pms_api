@@ -1,4 +1,4 @@
-import { ISiteInfo } from "../model/monit_model"
+import { SiteInfo } from "../model/monit_model"
 import { db } from "./admin"
 
 
@@ -6,7 +6,7 @@ const collectionName = 'monit'
 
 
 // Addnew
-export const addSiteInfo = async (monitMeta: ISiteInfo): Promise<void> => {
+export const addSiteInfo = async (monitMeta: SiteInfo): Promise<void> => {
 	try {
 		await db.collection(collectionName).add(monitMeta)
 		console.log('Document successfully written!')
@@ -17,7 +17,7 @@ export const addSiteInfo = async (monitMeta: ISiteInfo): Promise<void> => {
 
 
 // GetById
-export const getSiteById = async (sid: string): Promise<ISiteInfo|null> => {
+export const getSiteById = async (sid: string): Promise<SiteInfo|null> => {
   try {
     const doc = await db.collection(collectionName).doc(sid).get()
 
@@ -25,7 +25,7 @@ export const getSiteById = async (sid: string): Promise<ISiteInfo|null> => {
       console.error('No such document!')
       return null
     }
-		return doc.data() as ISiteInfo
+		return doc.data() as SiteInfo
   } catch (error) {
     console.error('Error getting document: ', error)
     return null
@@ -33,7 +33,7 @@ export const getSiteById = async (sid: string): Promise<ISiteInfo|null> => {
 }
 
 // GetList
-export const getSiteInfos = async ( cid:string, model:string): Promise<ISiteInfo[]> => {
+export const getSiteList = async ( cid:string, model:string): Promise<SiteInfo[]> => {
 	try {
 		const snapshot = await db.collection(collectionName)
 			.where('cid', 	'==', cid)
@@ -44,9 +44,9 @@ export const getSiteInfos = async ( cid:string, model:string): Promise<ISiteInfo
 			return []
 		}
 		
-		const list: ISiteInfo[] = []
+		const list: SiteInfo[] = []
 		snapshot.forEach(doc => {
-			list.push(doc.data() as ISiteInfo)
+			list.push(doc.data() as SiteInfo)
 		})
 		
 		return list
@@ -57,7 +57,7 @@ export const getSiteInfos = async ( cid:string, model:string): Promise<ISiteInfo
 }
 
 // Update
-export const updateSiteInfo = async (docId: string, monitMeta: Partial<ISiteInfo>): Promise<void> => {
+export const updateSiteInfo = async (docId: string, monitMeta: Partial<SiteInfo>): Promise<void> => {
 	try {
 		await db.collection(collectionName).doc(docId).update(monitMeta)
 		console.log('Document successfully updated!')

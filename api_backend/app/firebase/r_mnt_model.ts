@@ -21,14 +21,14 @@ export const getMonitModel = async (name: string): Promise<MonitModel | null> =>
 		const snapshot = await db.collection(coll).where('model', '==', name).get()
 		
 		if (snapshot.empty) {
-			console.log('No matching documents.')
+			console.log('REPO.모니터모델. Empty')
 			return null
 		}
 		
 		const doc = snapshot.docs[0]
 		return doc.data() as MonitModel
 	} catch (error) {
-		console.error('Error getting document: ', error)
+		console.error('REPO.모니터모델 =>', error)
 		return null
 	}
 }

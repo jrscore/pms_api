@@ -1,133 +1,106 @@
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
+import { Inverter, GridData } from '../model/grid'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
-import { ISiteInfo, MonitModel } from '../model/monit_model'
-import { JsonDoc } from '../model/jsondoc'
+import { SiteInfo, MonitModel } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
-import { getSiteInfos } from '../firebase/r_site_info'
+import { getSiteList as getSiteList } from '../firebase/r_site_info'
 
-// axios 기본 설정
-const headerBasic = {
-	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,,application/signed-exchange;v=b3;q=0.7',
-	'Accept-Encoding': 'gzip, deflate',
-	'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-	'Content-Type': 'application/x-www-form-urlencoded',
-}
+
+const baseUrl = 'http://www.cmsolar.kr'
+
 const header = {
-	'Host': 'www.cmsolar.kr',
-	'Origin': 'http://www.cmsolar.kr',
-	'Referer': 'http://www.cmsolar.kr/login.php',
-	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
-}
+	'Host': 					'www.cmsolar.kr',
+	'Origin': 				'http://www.cmsolar.kr',
+	'Referer': 				'http://www.cmsolar.kr/login.php',
 
-const Axios = wrapper(axios.create({
-	baseURL: 'http://www.cmsolar.kr',
-	withCredentials: true,
-	headers: header,
-	jar: new CookieJar()
-	// xsrfCookieName: 'XSRF-TOKEN',			// CSRF 토큰을 저장할 쿠키 이름 xsrfHeaderName: 'X-Csrf-Token',		// CSRF 토큰을 포함할 헤더 이름
-}))
+	'User-Agent':			'Mozilla/5.0 (Macintosh Intel Mac OS X 10_15_7)',
+	'Content-Type':		'application/x-www-form-urlencoded',
+
+	'Accept':						'text/html,application/xhtml+xml,application/xmlq=0.9,,application/signed-exchangev=b3q=0.7',
+	'Accept-Encoding':	'gzip, deflate',
+	'Accept-Language':	'ko-KR,koq=0.9,en-USq=0.8,enq=0.7',
+}
+const runState = (status: string) => status.toLowerCase() === 'running'
 
 
 
 export class CmBot implements Bot {
 
-	private apiUrl = `http://www.cmsolar.kr/plant/sub/idx_ok.php?mode=getPlant`	
-	private payload: JsonDoc | undefined
 	private model: MonitModel = {} as MonitModel
-	private sites: ISiteInfo[] = []
+	private sites: SiteInfo[] = []
 
+	private apiUrl = `http://www.cmsolar.kr/plant/sub/idx_ok.php?mode=getPlant`	
+	private Axios!: AxiosInstance
 
 	async initialize(cid:string) {
 		this.model = await getMonitModel('cm') ?? this.model
-		this.sites = await getSiteInfos(cid, 'cm')
+		this.sites = await getSiteList(cid, 'cm')
+		
+		this.Axios = wrapper(axios.create({
+			baseURL: baseUrl,
+			withCredentials: true,
+			headers: header,
+			jar: new CookieJar()
+		}))
 	}
 
+	async crawlling(): Promise<GridData[]> {
+		await this.login(this.sites[0].id, this.sites[0].pwd)
 
-	async crawlling(): Promise<IGrid[]> {
-
-		const gridList: IGrid[] = []
-		
+		const gridList: GridData[] = []
 		for (const site of this.sites) {
-			await this.login(site.id, site.pwd)
-			const invs = await this.getInverter()
-			gridList.push({
-				alias: site.alias,
-				pwr: invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0),
-				day: invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0),
-				invs: invs,
-			})
-			await this.logout()
+			const grid = await this.fetchGrid(site)
+			gridList.push(grid)
 		}
 		return gridList
 	}
 
 
-	async logout(): Promise<void> {
-		await Axios.get('http://cmsolar.kr/logout.php')
-	}
-
 	async login(id:string, pwd:string): Promise<void> {
-		const header = {
-			'Host': 'www.cmsolar.kr',
-			'Origin': 'http://www.cmsolar.kr',
-			'Referer': 'http://www.cmsolar.kr/login.php',
-			'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-			'Accept-Encoding': 'gzip, deflate',
-			'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+		const tmp = {
 			'Cache-Control': 'max-age=0',
 			'Connection' : 'keep-alive',
-			'Content-Type': 'application/x-www-form-urlencoded',
 			'Upgrade-Insecure-Requests': '1',
-			'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
 		}
-
 		try {
 			const payload = { id: id, pw: pwd, commit: 'Login' }
-			const response = await Axios.post('/login_ok.php', payload, { headers: header })
+			await this.Axios.post('/login_ok.php', payload, { headers: {...header, ...tmp} })
 		} catch (error) {
 			console.error('CM 로그인 실패:', error)
 		}
 	}
 
 
-	async getInverter(): Promise<IInverter[]> {
-		let json = []
-		
+	async fetchGrid(site:SiteInfo): Promise<GridData> {
+		const h2 = {
+			'Content-Type':			'application/json',
+			'Accept': 					'application/json, text/plain, */*',
+			'X-Requested-With':	'XMLHttpRequest',
+		}		
 		try {
-			const header = {
-				'Host': 'www.cmsolar.kr',
-        'Referer': 'http://www.cmsolar.kr/plant/',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json, text/plain, */*',
-        'Origin': 'http://www.cmsolar.kr',
-        'Content-Type': 'application/json'
-			}
-			const response = await Axios.get(this.apiUrl, { headers: header })
+			const result = await this.Axios.get(this.apiUrl, { headers: { ...header, ...h2 } })
 
-			if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-				json = response.data[0]?.power
-			}
-
-			return json.map((inv: any, idx: number) => ({
-				no: idx + 1,
-				run: this.convertRunStatus(inv.dev_stat2), // 'dev_stat2' 값을 사용하여 상태 변환
-				pwr: Math.floor(inv.pow_ac_p),      // 'pow_totalpower'를 사용하여 출력 전력 변환
-				day: Math.floor(inv.pow_today),           // 'pow_today'를 사용하여 일일 전력 변환
-				yld: Math.floor(inv.pow_thisyear)         // 'pow_thisyear'를 사용하여 연간 전력 변환
+			// 인버터
+			const inverters = result.data[0].power.map(el => ({
+				no: el.dev_deviceid,
+				run: runState(el.dev_stat2),
+				pwr: ~~(el.pow_ac_p / 1000),
+				day: ~~(el.pow_today / 1000),
+				yld: ~~(el.pow_thismonth / 1000),
 			}))
-		} catch (error) {
-			throw new Error(error as string)
+			// Grid
+			return {
+				alias:	site.alias,
+				pwr:		inverters.reduce((sum, inv) => sum + inv.pwr, 0),
+				day:		inverters.reduce((sum, inv) => sum + inv.day, 0),
+				invs:		inverters,
+			}
+		} catch (err) {
+			console.error('CM 인버터 에러 발생:', err)
+			return { alias: site.alias, pwr:0, day:0, invs:[] }
 		}
-	}
-
-
-
-	convertRunStatus(status: string): boolean {
-		return status.toLowerCase() === 'running'
 	}
 
 }

@@ -1,7 +1,7 @@
-import { IGrid, IInverter } from "../model/grid"
+import { GridData, Inverter } from "../model/grid"
 
 
-export function hexXmlParser(xmlString: string): IGrid[] {
+export function hexXmlParser(xmlString: string): GridData[] {
   // XML 문자열에서 필요한 데이터를 추출합니다.
   const valueMatch = xmlString.match(/value="([^"]*)"/)
 
@@ -17,7 +17,7 @@ export function hexXmlParser(xmlString: string): IGrid[] {
     const json = JSON.parse(valstr)
 
     // 그리드 리스트를 우선 생성합니다.
-    const grids: IGrid[] = json.filter((item: any) => item.invid === 0).map((item: any) => ({
+    const grids: GridData[] = json.filter((item: any) => item.invid === 0).map((item: any) => ({
       alias: item.title,
       pwr: parseFloat(item.currentpower),
       day: parseFloat(item.daily),
@@ -29,7 +29,7 @@ export function hexXmlParser(xmlString: string): IGrid[] {
       if (item.invid !== 0) {
         const grid = grids.find(g => g.alias === json.find((gridItem: any) => gridItem.cusno === item.cusno && gridItem.invid === 0).title)
         if (grid) {
-          const inverter: IInverter = {
+          const inverter: Inverter = {
             no: item.invid,
             pwr: parseFloat(item.currentpower),
             day: parseFloat(item.daily),

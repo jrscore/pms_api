@@ -1,71 +1,69 @@
-import axios from 'axios'
-import { generateTimeBasedOnNow } from '../utils/util'
+import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
-import { ISiteInfo, MonitModel } from '../model/monit_model'
+import { GridData } from '../model/grid'
+import { wrapper } from 'axios-cookiejar-support'
+import { CookieJar } from 'tough-cookie'
+import { SiteInfo, MonitModel } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
-import { JsonDoc } from '../model/jsondoc'
-import { getSiteInfos } from '../firebase/r_site_info'
+import { getSiteList as getSiteList } from '../firebase/r_site_info'
+import { generateTimeBasedOnNow } from '../utils/util'
+
+
+
+const header = {
+	'Host':						'www.octo.co.kr',
+	'Origin':					'https://www.octo.co.kr',
+	'Referer':				'https://www.octo.co.kr',
+	'Accept':					'application/json, text/plain, */*',
+	'Content-Type':		'application/json',
+}
+
 
 
 export class OctoBot implements Bot {
 
-	private ax = axios.create()
-	private _token = ''
+	private baseUrl = 'https://emsapi.atlasconn.com:12443/api/v1'
+	private loginUrl = `${this.baseUrl}/authority/login`
+	private apiUrl = '/inverter/data'
 
 	private model: MonitModel = {} as MonitModel
-	private sites: ISiteInfo[] = []
-	private payload: JsonDoc | undefined
-	private headers: JsonDoc = {
-		'Content-Type': 'application/json',
-		'Accept': `application/json, text/plain, */*`,
-		'Origin': 'https://www.octo.co.kr',
-		'Referer': 'https://www.octo.co.kr/',
-	}
+	private sites: SiteInfo[] = []
+	private Axios!: AxiosInstance
+	private _token = ''
 
 
 	async initialize(cid:string) {
-
 		this.model = await getMonitModel('octo') ?? this.model
-		this.sites = await getSiteInfos(cid, 'octo')
-		//const modelResult = await getMonitModel('octo');this.model = modelResult ?? this.model;const siteInfos = await getSiteInfos(cid, 'octo');this.sites = siteInfos
-		this.payload = {
+		this.sites = await getSiteList(cid, 'octo')
+		
+		this.Axios = wrapper(axios.create({
+			baseURL: this.baseUrl,
+			withCredentials: true,
+			jar: new CookieJar()// headers: header,
+		}))
+	}
+
+
+	async crawlling(): Promise<GridData[]> {
+		await this.login(this.sites[0].id, this.sites[0].pwd)
+		const gridList: GridData[] = []
+		for (const site of this.sites) {
+			const grid = await this.fetchGrid(site)
+			gridList.push(grid)
+		}
+		return gridList
+	}
+
+
+	async login(id:string, pwd:string): Promise<void> {
+		const payload = {
 			userId: 	this.sites[0].id,
 			userPass:	this.sites[0].pwd.toString(),
 			referrer:	'ems_customer_pc_web'
 		}
-	}
-
-
-	get isLogin(): boolean {
-		return !!this._token
-	}
-
-	
-	async crawlling (): Promise<IGrid[]> {
-			
-		await this.login()
-		const gridResult: IGrid[] = []
-
-		for (const info of this.sites!) {
-			const invs = await this.getInverter(info.code)
-			const power = invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0)
-			const dayyld = invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0)
-
-			gridResult.push({
-				alias: info.alias,
-				pwr: power,
-				day: dayyld,
-				invs: invs
-			})
-		}
-		return gridResult
-	}
-
-
-	async login(): Promise<void> {
 		try {
-			const data = (await this.ax.post(`${this.model.url}/authority/login`, this.payload, { headers: this.headers })).data
+			const response = await this.Axios.post(this.loginUrl, payload, { headers: header })
+			const data = response.data
 
 			if (data.response?.session?.userKey) {
 				this._token = data.response?.session?.userKey
@@ -79,33 +77,35 @@ export class OctoBot implements Bot {
 	}
 
 
-	async getInverter(sitecode:string): Promise<IInverter[]> {
+	async fetchGrid(site:SiteInfo): Promise<GridData> {
+		const payload = {
+			mcno: site.code,
+			uKey: this._token,
+			time: generateTimeBasedOnNow()
+		}
 		try {
-			const apiUrl = `${this.model.url}/inverter/data`
-			const payload = {
-				mcno: sitecode,
-				uKey: this._token,
-				time: generateTimeBasedOnNow()
-			}
-
-			const response = await this.ax.get(apiUrl, { headers: this.headers, params: payload })
-
-			let json = []
-			if (response.status === 200 && response.data?.response?.inverters[0]?.inverters) {
-				json = response.data?.response?.inverters[0]?.inverters
-			}
-
-			return json.map((inv: any, idx: number) => ({
+			const response = await this.Axios.get(this.apiUrl, { headers: header, params: payload })
+			const inverters = response.data?.response?.inverters[0]?.inverters.map((inv: any, idx: number) => ({
 				no:  idx + 1,
 				run: inv.isRun,
-				pwr: Math.floor(0),//(inv.ackw),
-				day: Math.floor(0),//(inv.dayTotal),
-				yld: Math.floor(0),//(inv.total)
+				pwr: inv.ackw,
+				day: inv.dayTotal,
+				yld: inv.total
 			}))
-		} catch (error) {
-			throw new Error(error as string)
+
+			inverters.map(it => console.log(it))
+
+			// Grid
+			return {
+				alias:	site.alias,
+				pwr:		inverters.reduce((sum, inv) => sum + inv.pwr, 0),
+				day:		inverters.reduce((sum, inv) => sum + inv.day, 0),
+				invs:		inverters,
+			}
+		} catch (err) {
+			console.error('En Inverter 에러 발생:', err)
+			return { alias: site.alias, pwr:0, day:0, invs:[] }
 		}
 	}
+
 }
-
-

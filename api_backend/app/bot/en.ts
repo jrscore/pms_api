@@ -1,56 +1,62 @@
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
+import { Inverter, GridData } from '../model/grid'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
-import { ISiteInfo, MonitModel } from '../model/monit_model'
+import { SiteInfo, MonitModel } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
-import { getSiteInfos } from '../firebase/r_site_info'
+import { getSiteList as getSiteList } from '../firebase/r_site_info'
 
 
-// axios 기본 설정
+
+const header = {
+	'Host':						'iplug.dasstech.com',
+	'Origin':					'http://iplug.dasstech.com',
+	'Referer':				'http://iplug.dasstech.com/login',
+
+	'User-Agent':			'Mozilla/5.0 (Macintosh Intel Mac OS X 10_15_7)',
+	'Content-Type':		'application/x-www-form-urlencoded',
+
+	'Accept':						'text/html,application/xhtml+xml,application/xmlq=0.9,,application/signed-exchangev=b3q=0.7',
+	'Accept-Encoding':	'gzip, deflate',
+	'Accept-Language':	'ko-KR,koq=0.9,en-USq=0.8,enq=0.7',
+}
+const runState = (status: string) => status.toLowerCase() === 'running'
+
+
 
 export class EnsearchBot implements Bot {
 
-	private baseURL = 'http://ensearchsun.com'
-	private loginUrl = `/login.solar`	
-	private lgoutUrl = `/logout.php`	
+	private baseUrl = 'http://ensearchsun.com'
+	private loginUrl = `/login.solar`
 	private apiUrl = `/inverter_status`
-	
-	private sites: ISiteInfo[] = []
+
 	private model: MonitModel = {} as MonitModel
-	private gridList: IGrid[] = []
-
-
-	private Axios = wrapper(axios.create({
-		baseURL: this.baseURL,
-		withCredentials:true, 
-		jar: new CookieJar()
-	}))
+	private sites: SiteInfo[] = []
+	private Axios!: AxiosInstance
 
 
 	async initialize(cid:string) {
 		this.model = await getMonitModel('en') ?? this.model
-		this.sites = await getSiteInfos(cid, 'en')
+		this.sites = await getSiteList(cid, 'en')
+		
+		this.Axios = wrapper(axios.create({
+			baseURL: this.baseUrl,
+			withCredentials: true,
+			jar: new CookieJar()// headers: header,
+		}))
 	}
 
 
-	//1회로그인 후 fetching
-	async crawlling(): Promise<IGrid[]> {
-
-		const gridList: IGrid[] = []
-
+	async crawlling(): Promise<GridData[]> {
+		// 로그인
 		await this.login(this.sites[0].id, this.sites[0].pwd)
+
+		const gridList: GridData[] = []
 		for (const site of this.sites) {
-			const invs = await this.getInverter(site.code)
-			gridList.push({
-				alias: site.alias,
-				pwr: invs.reduce((sum, inv) => sum + inv.pwr, 0),
-				day: invs.reduce((sum, inv) => sum + inv.day, 0),
-				invs: invs,
-			})
-			}
-		await this.logout()
+			const grid = await this.fetchGrid(site)
+			gridList.push(grid)
+		}
 		return gridList
 	}
 
@@ -64,29 +70,32 @@ export class EnsearchBot implements Bot {
 	}
 
 
-	async logout(): Promise<void> {
-		await this.Axios.get(this.lgoutUrl)
-	}
-
-
-	async getInverter(code:string): Promise<IInverter[]> {	
+	async fetchGrid(site:SiteInfo): Promise<GridData> {
 		try {
-			const response = await this.Axios.post(this.apiUrl, {'field':code})
-			return response.data.map((inv: any, idx: number) => ({
+
+			const response = await this.Axios.post(this.apiUrl, {'field':site.code})
+			// 인버터
+			const inverters = response.data.map((inv: any, idx: number) => ({
 				no:  idx + 1,
 				run: inv.fault,
 				pwr: Math.floor(inv.now_energy),
-				day: Math.floor(inv.energy),
+				day: 0,
 				yld: 0
 			}))
-		} catch (error) {
-			throw new Error(error as string)
+
+			inverters.map(it => console.log(it))
+
+			// Grid
+			return {
+				alias:	site.alias,
+				pwr:		inverters.reduce((sum, inv) => sum + inv.pwr, 0),
+				day:		inverters.reduce((sum, inv) => sum + inv.day, 0),
+				invs:		inverters,
+			}
+		} catch (err) {
+			console.error('En Inverter 에러 발생:', err)
+			return { alias: site.alias, pwr:0, day:0, invs:[] }
 		}
-	}
-
-
-	convertRunStatus(status: string): boolean {
-		return status.toLowerCase() === 'running'
 	}
 
 }

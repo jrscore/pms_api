@@ -1,12 +1,12 @@
 import axios from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
+import { Inverter, GridData } from '../model/grid'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
-import { ISiteInfo, MonitModel } from '../model/monit_model'
+import { SiteInfo, MonitModel } from '../model/monit_model'
 import { JsonDoc } from '../model/jsondoc'
 import { getMonitModel } from '../firebase/r_mnt_model'
-import { getSiteInfos } from '../firebase/r_site_info'
+import { getSiteList } from '../firebase/r_site_info'
 import { error } from 'console'
 
 // axios 기본 설정
@@ -36,16 +36,16 @@ export class RemsBot implements Bot {
 	private loginUrl = `/login_chk.php`	
 	private logoutUrl = `/logout.php`	
 	private apiUrl = `/v2/local/proc/index_proc.php`	
-	private sites: ISiteInfo[] = []
-	private gridList: IGrid[] = []
+	private sites: SiteInfo[] = []
+	private gridList: GridData[] = []
 
 
 	async initialize(cid:string) {
-		this.sites = await getSiteInfos(cid, 'rems')// this.model = await getMonitModel('dass') ?? this.model
+		this.sites = await getSiteList(cid, 'rems')// this.model = await getMonitModel('dass') ?? this.model
 	}
 
 
-	async crawlling(): Promise<IGrid[]> {
+	async crawlling(): Promise<GridData[]> {
 
 		for (const site of this.sites) {
 			if (typeof site.memo === 'object' && site.memo !== null) {
@@ -81,7 +81,7 @@ export class RemsBot implements Bot {
 	}
 
 
-	async getInverter(code:string): Promise<IInverter[]> {
+	async getInverter(code:string): Promise<Inverter[]> {
 		try {
 			const payload = { act:'empty', pscode: code }
 			const response = await Axios.post(this.apiUrl, payload, { headers: header })

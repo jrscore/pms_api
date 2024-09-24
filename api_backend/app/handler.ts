@@ -1,7 +1,7 @@
 import { BotFactory } from './bot/factory'
 import { Message, PubSub } from '@google-cloud/pubsub'
 import { pubsubService } from './server'
-import { IGrid } from './model/grid'
+import { GridData } from './model/grid'
 
 
 
@@ -13,7 +13,7 @@ export const mntHandler = async (message: Message) => {
 	const taskid = msg.taskId
 	const cid = msg.cid
 	const model = msg.model
-	let result:IGrid[]
+	let result:GridData[]
 	let responseBuffer:Buffer
 
 	try {

@@ -1,15 +1,15 @@
 
-export interface IGrid {
+export interface GridData {
 	alias: string
 	pac?: number
 	pwr: number
 	day: number
 	stt?: boolean
 	flt?: boolean
-	invs: IInverter[]
+	invs: Inverter[]
 }
 
-export interface IInverter {
+export interface Inverter {
 	no:  number
 	pwr: number
 	day: number

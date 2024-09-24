@@ -1,95 +1,84 @@
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { IInverter, IGrid } from '../model/grid'
+import { Inverter, GridData } from '../model/grid'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
-import { ISiteInfo, MonitModel } from '../model/monit_model'
-import { JsonDoc } from '../model/jsondoc'
+import { SiteInfo, MonitModel } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
-import { getSiteInfos } from '../firebase/r_site_info'
+import { getSiteList } from '../firebase/r_site_info'
 import * as cheerio from 'cheerio'
+import { log } from 'console'
 
 
+const baseUrl = 'http://www.ecogreentech.kr'
 
-// axios 기본 설정
 const header = {
-	'Host': 'www.ecogreentech.kr',
-	'Origin': 'http://www.ecogreentech.kr',
+	'Host':						'www.ecogreentech.kr',
+	'Origin':					'http://www.ecogreentech.kr',
+	'Referer':				'http://iplug.dasstech.com/login',
 
-	'Accept': 'text/html,application/xhtml+xml,application/xmlq=0.9,,application/signed-exchangev=b3q=0.7',
-	'Accept-Encoding': 'gzip, deflate',
-	'Accept-Language': 'ko-KR,koq=0.9,en-USq=0.8,enq=0.7',
-	'Content-Type': 'application/x-www-form-urlencoded',
-	'User-Agent': 'Mozilla/5.0 (Macintosh Intel Mac OS X 10_15_7)'
+	'User-Agent':			'Mozilla/5.0 (Macintosh Intel Mac OS X 10_15_7)',
+	'Content-Type':		'application/x-www-form-urlencoded',
+
+	'Accept':						'text/html,application/xhtml+xml,application/xmlq=0.9,,application/signed-exchangev=b3q=0.7',
+	'Accept-Encoding':	'gzip, deflate',
+	'Accept-Language':	'ko-KR,koq=0.9,en-USq=0.8,enq=0.7',
 }
-
-const Axios = wrapper(axios.create({
-	baseURL: 'http://www.ecogreentech.kr',
-	withCredentials: true,
-	headers: header,
-	jar: new CookieJar()
-}))
+const runState = (status: string) => status.toLowerCase() === 'running'
 
 
 
 export class EcoBot implements Bot {
 
-	private apiUrl = `http://www.ecogreentech.kr/index.php?PID=02`	
-	private logoutUrl = `http://www.ecogreentech.kr/index.php?PID=9902`	
-	private loginUrl = `http://www.ecogreentech.kr/index.php?PID=`	
-	private sites: ISiteInfo[] = []
-	private gridList: IGrid[] = []
+	private model: MonitModel = {} as MonitModel
+	private sites: SiteInfo[] = []
 
+	private apiUrl = `${baseUrl}/index.php?PID=02`
+	private Axios!: AxiosInstance
 
 	async initialize(cid:string) {
-		this.sites = await getSiteInfos(cid, 'eco')// this.model = await getMonitModel('dass') ?? this.model
+		this.model = await getMonitModel('eco') ?? this.model
+		this.sites = await getSiteList(cid, 'eco')
+		
+		this.Axios = wrapper(axios.create({
+			baseURL: baseUrl,
+			withCredentials: true,
+			headers: header,
+			jar: new CookieJar()
+		}))
 	}
 
+	async crawlling(): Promise<GridData[]> {
+		// 로그인
+		await this.login(this.sites[0].id, this.sites[0].pwd)
 
-	async crawlling(): Promise<IGrid[]> {
+		const gridList: GridData[] = []
 		for (const site of this.sites) {
-			await this.login(site.id, site.pwd)
-			const invs = await this.getInverter()
-			this.gridList.push({
-				alias: site.alias,
-				pwr: invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0),
-				day: invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0),
-				invs: invs,
-			})
-			await this.logout()
+			const grid = await this.fetchGrid(site)
+			gridList.push(grid)
 		}
-		return this.gridList
-	}
-
-
-	async logout(): Promise<void> {
-		try {
-			await Axios.get(this.logoutUrl)
-			console.log('로그아웃=========')
-		} catch (error) {
-			console.log(error)
-		}
+		return gridList
 	}
 
 
 	async login(id:string, pwd:string): Promise<void> {
 		try {
 			const payload = { action: 'loginOK', userID: id, userPass: pwd, x: '252', y: '41' }
-			const response = await Axios.post( this.loginUrl, payload, { headers: header })
+			const response = await this.Axios.post('/index.php?PID=', payload, { headers: header })
 			await new Promise(resolve => setTimeout(resolve, 1000))
-			console.error('ECO LOGIN')
 		} catch (error) {
 			console.error('ECO LOGIN 실패:', error)
 		}
 	}
 
 
-	async getInverter(): Promise<IInverter[]> {
+	async fetchGrid(site:SiteInfo): Promise<GridData> {
 		try {
-			const response = await Axios.get(this.apiUrl)
+			const response = await this.Axios.post(this.apiUrl)
 			const $ = cheerio.load(response.data)
 
-			const invs: IInverter[] = $('table.se_list1 tbody tr').map((idx, el) => {
+			// 인버터
+			const inverters = $('table.se_list1 tbody tr').map((i, el) => {
 				return {
 					no:  parseInt( $(el).find('td').eq(0).text().trim(), 10),
 					pwr: parseInt( $(el).find('td').eq(4).text().trim(), 10),
@@ -98,17 +87,22 @@ export class EcoBot implements Bot {
 					run: true
 				}
 			}).get()
-			console.log('인버터데이터',invs)
+
+			console.log(`${site.alias}`)
+			inverters.map( it => console.log(`${it}`) )
 			
-			return invs
-		} catch (error) {
-				throw new Error(error instanceof Error ? error.message : 'Unknown error')
+			// Grid
+			return {
+				alias:	site.alias,
+				pwr:		inverters.reduce((sum, inv) => sum + inv.pwr, 0),
+				day:		inverters.reduce((sum, inv) => sum + inv.day, 0),
+				invs:		inverters,
+			}
+
+		} catch (err) {
+			console.error('Dass Inverter 에러 발생:', err)
+			return { alias: site.alias, pwr:0, day:0, invs:[] }
 		}
-	}
-
-
-	convertRunStatus(status: string): boolean {
-		return status.toLowerCase() === 'running'
 	}
 
 }

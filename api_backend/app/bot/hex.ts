@@ -1,7 +1,7 @@
 import { chromium, Page, Browser } from 'playwright'
 import { Bot } from './factory'
-import { IGrid, IInverter } from '../model/grid'
-import { ISiteInfo } from '../model/monit_model'
+import { GridData, Inverter } from '../model/grid'
+import { SiteInfo } from '../model/monit_model'
 import { BrowserInstance } from '../browser'
 import { hexXmlParser } from '../utils/hexParser'
 
@@ -22,7 +22,7 @@ export class HexBot implements Bot {
   
 	private page: Page | null = null
 
-  async crawlling(): Promise<IGrid[]> {
+  async crawlling(): Promise<GridData[]> {
 		this.page = await BrowserInstance.getPage()
 		await this.login()
 		const grids = await this.fetchGrid()
@@ -43,9 +43,9 @@ export class HexBot implements Bot {
     await this.page!.click(logtag)
   }
 
-	async fetchGrid(): Promise<IGrid[]> {
+	async fetchGrid(): Promise<GridData[]> {
 		
-		let gridList: IGrid[] = []
+		let gridList: GridData[] = []
 
 		try {
 			// API 응답 대기
