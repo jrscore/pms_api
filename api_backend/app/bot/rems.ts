@@ -1,106 +1,92 @@
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { Inverter, GridData } from '../model/grid'
+import { GridData } from '../model/grid'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
 import { SiteInfo, MonitModel } from '../model/monit_model'
-import { JsonDoc } from '../model/jsondoc'
 import { getMonitModel } from '../firebase/r_mnt_model'
-import { getSiteList } from '../firebase/r_site_info'
-import { error } from 'console'
+import { getSiteList as getSiteList } from '../firebase/r_site_info'
 
-// axios 기본 설정
+
 const header = {
-	'Host': 'nrems.co.kr',
-	'Origin': 'http://nrems.co.kr',
-
+	'Host':						'nrems.co.kr',
+	'Origin':					'http://nrems.co.kr',
+	// 'Referer':				'https://www.octo.co.kr',
+	// 'Accept':					'application/json, text/plain, */*',
+	// 'Content-Type':		'application/json',
 	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,,application/signed-exchange;v=b3;q=0.7',
-	'Accept-Encoding': 'gzip, deflate',
-	'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
 	'Content-Type': 'application/x-www-form-urlencoded',
-	'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'
 }
-
-const Axios = wrapper(axios.create({
-	baseURL: 'http://nrems.co.kr',
-	withCredentials: true,
-	headers: header,
-	jar: new CookieJar()
-	// xsrfCookieName: 'XSRF-TOKEN',			// CSRF 토큰을 저장할 쿠키 이름 xsrfHeaderName: 'X-Csrf-Token',		// CSRF 토큰을 포함할 헤더 이름
-}))
-
 
 
 export class RemsBot implements Bot {
 
-	private loginUrl = `/login_chk.php`	
-	private logoutUrl = `/logout.php`	
-	private apiUrl = `/v2/local/proc/index_proc.php`	
+	private baseUrl = 'http://nrems.co.kr'
+	private loginUrl = `/login_chk.php`
+	private apiUrl = '/v2/local/proc/index_proc.php'
+
+	private model: MonitModel = {} as MonitModel
 	private sites: SiteInfo[] = []
-	private gridList: GridData[] = []
+	private Axios!: AxiosInstance
 
 
 	async initialize(cid:string) {
-		this.sites = await getSiteList(cid, 'rems')// this.model = await getMonitModel('dass') ?? this.model
+		this.model = await getMonitModel('rems') ?? this.model
+		this.sites = await getSiteList(cid, 'rems')
+		
+		this.Axios = wrapper(axios.create({
+			baseURL: this.baseUrl,
+			withCredentials: true,
+			jar: new CookieJar()
+		}))
 	}
 
 
 	async crawlling(): Promise<GridData[]> {
-
+		await this.login(this.sites[0].id, this.sites[0].pwd)
+		const gridList: GridData[] = []
 		for (const site of this.sites) {
-			if (typeof site.memo === 'object' && site.memo !== null) {
-				await this.login(site.memo.id, site.memo.pwd)
-			}
-			const invs = await this.getInverter(site.code)
-			this.gridList.push({
-				alias: site.alias,
-				pwr: invs.reduce((sum, inv) => sum + inv.pwr, 0),
-				day: invs.reduce((sum, inv) => sum + inv.day, 0),
-				invs: invs,
-			})
-			await this.logout()
+			const grid = await this.fetchGrid(site)
+			gridList.push(grid)
 		}
-		return this.gridList
+		return gridList
 	}
 
 
 	async login(id:string, pwd:string): Promise<void> {
 		try {
 			const payload = { act:'loginChk',  user_id: id, user_pw: pwd }
-			const response = await Axios.post(this.loginUrl, payload, { headers: header })
-			if(response.status !== 200)
-				throw new error('REMS LOGIN 실패:')
+			const response = await this.Axios.post(this.loginUrl, payload, { headers: header })
 		} catch (error) {
 			console.error('REMS LOGIN 실패:', error)
 		}
 	}
 
 
-	async logout(): Promise<void> {
-		await Axios.get(this.logoutUrl)
-	}
-
-
-	async getInverter(code:string): Promise<Inverter[]> {
+	async fetchGrid(site:SiteInfo): Promise<GridData> {
 		try {
-			const payload = { act:'empty', pscode: code }
-			const response = await Axios.post(this.apiUrl, payload, { headers: header })
-			const invs = response.data.ivt_value
-
-			return invs.map((inv: any, idx: number) => ({
-				no: idx + 1,
-				run: inv.DEVICE_STATE,
-				pwr: parseInt(inv.curKW),
-				day: 0,
-				yld: parseInt(inv.KWH)
+			const payload = { act:'empty', pscode: site.code }
+			const response = await this.Axios.post(this.apiUrl, payload, { headers: header })
+			const inverters = response.data.ivt_value.map((inv: any, idx: number) => ({
+				no:		idx + 1,
+				run:	true,
+				pwr:	parseInt(inv.KW),
+				day:	0,
+				yld:	parseInt(inv.KWH)
 			}))
-		} catch (error) {
-			throw new Error(error as string)
+
+			inverters.map(it => console.log(it))
+
+			// Grid
+			return {
+				alias:	site.alias,
+				pwr:		inverters.reduce((sum, inv) => sum + inv.pwr, 0),
+				day:		inverters.reduce((sum, inv) => sum + inv.day, 0),
+				invs:		inverters,
+			}
+		} catch (err) {
+			console.error('REMS Inverter 에러 발생:', err)
+			return { alias: site.alias, pwr:0, day:0, invs:[] }
 		}
 	}
-
-	convertRunStatus(status: string): boolean {
-		return status.toLowerCase() === 'running'
-	}
-
 }

@@ -13,3 +13,6 @@ export function generateTimeBasedOnNow(): number {
 
 	return time
 }
+
+
+export const hdRunstate = (status:string) => status.toLowerCase() === 'running'

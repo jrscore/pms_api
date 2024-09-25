@@ -27,7 +27,7 @@ import { ensearch_dummy } from './dummy_data'
 
 
 async function test() {
-  const bot = BotFactory.getBot('octo')
+  const bot = BotFactory.getBot('hex')
   bot	.initialize('DJFp5mQmPfEXQFZRyIc0')
 			.then(() => bot.crawlling())
     	.catch(err => console.error('에러발생', err))

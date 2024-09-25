@@ -1,6 +1,5 @@
 import { BotFactory } from './bot/factory'
 import { Message, PubSub } from '@google-cloud/pubsub'
-import { pubsubService } from './server'
 import { GridData } from './model/grid'
 
 
