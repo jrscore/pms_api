@@ -15,4 +15,5 @@ export function generateTimeBasedOnNow(): number {
 }
 
 
-export const hdRunstate = (status:string) => status.toLowerCase() === 'running'
+export const hdRunstate = (status:string) => status.toLowerCase() === 'run'
+export const LaseeRunstate = (status:number) => status === 1

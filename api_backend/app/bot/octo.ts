@@ -71,6 +71,7 @@ export class OctoBot implements Bot {
 				throw Error('octo:로그인실패')
 			}
 			console.error("로그인 성공")
+			await new Promise<void>(s => setTimeout(s, 1000))
 		} catch (error) {
 			console.error(error)
 		}

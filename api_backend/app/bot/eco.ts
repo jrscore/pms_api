@@ -65,7 +65,7 @@ export class EcoBot implements Bot {
 		try {
 			const payload = { action: 'loginOK', userID: id, userPass: pwd, x: '252', y: '41' }
 			const response = await this.Axios.post('/index.php?PID=', payload, { headers: header })
-			await new Promise(resolve => setTimeout(resolve, 1000))
+			await new Promise<void>(s => setTimeout(s, 1000))
 		} catch (error) {
 			console.error('ECO LOGIN 실패:', error)
 		}

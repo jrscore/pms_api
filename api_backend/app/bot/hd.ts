@@ -1,114 +1,104 @@
-// import axios from 'axios'
-// import { Bot } from './factory'
-// import { Inverter, GridData } from '../model/grid'
-// import { SiteInfo, MonitModel } from '../model/monit_model'
-// import { getMonitModel } from '../firebase/r_mnt_model'
-// import { JsonDoc } from '../model/jsondoc'
-// import { wrapper } from 'axios-cookiejar-support'
-// import { CookieJar } from 'tough-cookie'
-// import { getSiteList } from '../firebase/r_site_info'
-
-// export class HdBot implements Bot {
-
-// 	private ax = wrapper(axios.create({ jar: new CookieJar() })) // Axios 인스턴스에 쿠키 지원 추가
-	
-// 	private payload: JsonDoc | undefined
-// 	private model: MonitModel = {} as MonitModel
-// 	private sites: SiteInfo[] = []
-
-// 	private headers = {
-// 			'Host': 'hs3.hyundai-es.co.kr',
-// 			'Origin': 'https://hs3.hyundai-es.co.kr',
-// 			'Referer': 'https://hs3.hyundai-es.co.kr/',
-// 			'Accept': 'application/json, text/plain, */*',
-// 			'Accept-Encoding': 'gzip, deflate, br, zstd',
-// 			'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-// 			'Connection': 'keep-alive',
-// 			'Content-Type': 'application/json',
-// 			'Sec-Fetch-Dest': 'empty',
-// 			'Sec-Fetch-Mode': 'cors',
-// 			'Sec-Fetch-Site': 'same-origin',
-// 			'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-// 			'X-APIVERSION': 'v1.0',
-// 			'X-APP': 'HIWAY4VUETIFY',
-// 			'X-Auth-Token': 'null',
-// 			'X-CALLTYPE': '0',
-// 			'X-CHANNEL': 'WEB_PCWeb',
-// 			'X-LANG': 'ko',
-// 			'X-LOGKEY': '2024070623492385023IWPMY4VUETIFY7079',
-// 			'X-MID': 'login',
-// 			'X-VNAME': 'UI',
-// 			'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-// 			'sec-ch-ua-mobile': '?0',
-// 			'sec-ch-ua-platform': '"macOS"'
-// 		}
-	
-
-// 	async initialize(cid:string) {
-// 		this.model = await getMonitModel('hd') ?? this.model
-// 		this.sites = await getSiteList(cid, 'hd')
-// 		this.payload = {
-// 			user_id:  this.sites[0].id,
-// 			password: this.sites[0].pwd.toString(),
-// 		}
-// 	}
+import axios, { AxiosInstance } from 'axios'
+import { Bot } from './factory'
+import { GridData } from '../model/grid'
+import { wrapper } from 'axios-cookiejar-support'
+import { CookieJar } from 'tough-cookie'
+import { SiteInfo, MonitModel } from '../model/monit_model'
+import { getMonitModel } from '../firebase/r_mnt_model'
+import { getSiteList as getSiteList } from '../firebase/r_site_info'
+import { hdRunstate } from '../utils/util'
 
 
-// 	async crawlling(): Promise<GridData[]> {
-// 		await this.login()
-// 		const monitoring: GridData[] = []
+const header = {
+	'Host':						'hs3.hyundai-es.co.kr',
+	'Origin':					'https://hs3.hyundai-es.co.kr',
+	'Referer':				'https://hs3.hyundai-es.co.kr',
+	'Connection':			'keep-alive',
+	'Content-Type':		'application/json',
+	'Accept':					'application/json, text/plain, */*',
+	'User-Agent': 		'Chrome/126.0.0.0 Safari/537.36',
 
-// 		for (const info of this.sites!) {
-// 			const invs = await this.getInverter(info.code)
-// 			console.log(invs)
-			
-// 			monitoring.push({
-// 				alias: info.alias,
-// 				pwr: invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0),
-// 				day: invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0),
-// 				invs: invs,
-// 			})
-// 		}
-// 		return monitoring
-// 	}
-
-
-// 	async login(): Promise<void> {
-// 		try {
-// 			const response = await this.ax.post(`${this.model.url}/hismart/login`, this.payload, {
-// 				headers: this.headers,
-// 				withCredentials: true
-// 			})
-// 			console.log("로그인 성공");console.log("Cookies:", response.headers['set-cookie'])
-// 		} catch (error) {
-// 			console.error('로그인 실패:', error)
-// 		}
-// 	}
+	'X-APIVERSION': 'v1.0',
+	'X-APP': 'HIWAY4VUETIFY',
+	'X-Auth-Token': 'null',
+	'X-CALLTYPE': '0',
+	'X-CHANNEL': 'WEB_PCWeb',
+	'X-LANG': 'ko',
+	'X-LOGKEY': '2024070623492385023IWPMY4VUETIFY7079',
+	'X-MID': 'login',
+	'X-VNAME': 'UI',
+}
 
 
-// 	async getInverter(sitecode: string): Promise<Inverter[]> {
-// 		try {
-// 			const apiUrl = `${this.model.url}/hismart/monitoring/site/${sitecode}/inverter`
-// 			const response = await this.ax.get(apiUrl, {headers: this.headers,withCredentials: true })
+export class HdBot implements Bot {
 
-// 			let json = []
-// 			if (response.data?.response?.datas) {
-// 				json = response.data.response.datas
-// 			}
+	private baseUrl		= 'https://hs3.hyundai-es.co.kr'
+	private loginUrl	= '/hismart/login'
+	private apiUrl 		= '/hismart/site/getSiteInfo'
 
-// 			return json.map((inv: any, idx: number) => ({
-// 				no: idx + 1,
-// 				run: this.convertRunStatus(inv.run_status.toString()),
-// 				pwr: Math.floor(inv.PVPCS_Pac),
-// 				day: Math.floor(inv.PVPCS_Daily_P),
-// 				yld: 0,
-// 			}))
-// 		} catch (error) {
-// 			throw new Error(error as string)
-// 		}
-// 	}
+	private model: MonitModel = {} as MonitModel
+	private sites: SiteInfo[] = []
+	private Axios!: AxiosInstance
 
-// 	convertRunStatus(status: string): boolean {
-//     return status.toLowerCase() === 'running'
-// 	}
-// }
+
+	async initialize(cid:string) {
+		this.model = await getMonitModel('hd') ?? this.model
+		this.sites = await getSiteList(cid, 'hd')
+		
+		this.Axios = wrapper(axios.create({
+			baseURL: this.baseUrl,
+			withCredentials: true,
+			jar: new CookieJar()
+		}))
+	}
+
+
+	async crawlling(): Promise<GridData[]> {
+		await this.login(this.sites[0].id, this.sites[0].pwd)
+		const gridList: GridData[] = []
+		for (const site of this.sites) {
+			const grid = await this.fetchGrid(site)
+			gridList.push(grid)
+			await new Promise<void>(s => setTimeout(s, 1000))
+		}
+		return gridList
+	}
+
+
+	async login(id:string, pwd:string): Promise<void> {
+		try {
+			const payload = {user_id: id, password: pwd }
+			await this.Axios.post(this.loginUrl, payload, { headers: header })
+			await new Promise<void>(s => setTimeout(s, 1000))
+		} catch (error) {
+			console.error('HD LOGIN 실패:', error)
+		}
+	}
+
+
+	async fetchGrid(site:SiteInfo): Promise<GridData> {
+		try {
+			const response = await this.Axios.get( `${this.apiUrl}?site_id=${site.code}`, {headers:header, withCredentials: true})
+			const inverters = response.data.datas.SITE_INVERTER.map((inv: any, idx: number) => ({
+				no: idx + 1,
+				run: hdRunstate(inv.STATUS.toString()),
+				pwr: Math.floor(inv.INVETRER_OUTPUT),
+				day: 0,
+				yld: 0,
+			}))
+
+			inverters.map(it => console.log(it))
+
+			// Grid
+			return {
+				alias:	site.alias,
+				pwr:		inverters.reduce((sum, inv) => sum + inv.pwr, 0),
+				day:		inverters.reduce((sum, inv) => sum + inv.day, 0),
+				invs:		inverters,
+			}
+		} catch (err) {
+			console.error('HD Inverter 에러 발생:', err)
+			return { alias: site.alias, pwr:0, day:0, invs:[] }
+		}
+	}
+}

@@ -63,6 +63,7 @@ export class ObBot implements Bot {
 			if (data.response?.session?.userKey) {	// => optional chaining
 				this._token = data.response?.session?.userKey
 			}
+			await new Promise<void>(s => setTimeout(s, 1000))
 			console.error("로그인 성공")
 			return true
 		} catch (error) {

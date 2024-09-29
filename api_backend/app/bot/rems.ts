@@ -56,7 +56,8 @@ export class RemsBot implements Bot {
 	async login(id:string, pwd:string): Promise<void> {
 		try {
 			const payload = { act:'loginChk',  user_id: id, user_pw: pwd }
-			const response = await this.Axios.post(this.loginUrl, payload, { headers: header })
+			await this.Axios.post(this.loginUrl, payload, { headers: header })
+			await new Promise<void>(s => setTimeout(s, 1000))
 		} catch (error) {
 			console.error('REMS LOGIN 실패:', error)
 		}

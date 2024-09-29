@@ -1,120 +1,136 @@
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { Inverter, GridData } from '../model/grid'
-import { SiteInfo } from '../model/monit_model'
+import { GridData } from '../model/grid'
+import { MonitModel, SiteInfo } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
-import { URLSearchParams } from 'url'
+import { getSiteList } from '../firebase/r_site_info'
+import { hdRunstate, LaseeRunstate } from '../utils/util'
+import * as cheerio from 'cheerio'
 
-// axios 기본 설정
-const axiosService = wrapper(axios.create({
-	timeout: 60000,
-	baseURL: 'https://www.lasee.io',
-	withCredentials: true,
-	headers: {
-		'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-		'Accept': 'application/json, text/javascript, */*; q=0.01',
-		'Accept-Encoding': 'gzip, deflate, br, zstd',
-		'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-		'Cache-Control': 'max-age=0',
-		'Origin': 'https://www.lasee.io',
-		'Referer': 'https://www.lasee.io/2991',
-		'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-		'Sec-Fetch-Site': 'same-origin',
-		'Sec-Fetch-Mode': 'cors',
-		'Sec-Fetch-User': '?1',
-		'Sec-Fetch-Dest': 'empty',
-		'Upgrade-Insecure-Requests': '1',
-		'X-Requested-With': 'XMLHttpRequest',
-	},
-	xsrfCookieName: 'XSRF-TOKEN',
-	xsrfHeaderName: 'X-Csrf-Token',
-	jar: new CookieJar()
-}))
+
+const header = {
+	'Origin':					'https://www.lasee.io',
+	'Referer':				'https://www.lasee.io/',
+	'Connection':			'keep-alive',
+	'Content-Type':		'application/x-www-form-urlencoded; charset=UTF-8',
+	'Accept':					'text/html,application/xhtml+xml,application/xml;q=0.9,,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+	'User-Agent': 		'Chrome/126.0.0.0 Safari/537.36',
+	'X-Requested-With': 'XMLHttpRequest',
+	'sec-ch-ua': "Google Chrome;v=129, Not=A?Brand;v=8, Chromium;v=129",
+	'sec-ch-ua-mobile':'?0',
+	'sec-ch-ua-platform':"macOS",
+	'sec-fetch-dest':'empty',
+	'sec-fetch-mode':'cors',
+	'sec-fetch-site':'same-origin',
+}
+
 
 export class LaseeBot implements Bot {
-	private url: string = ''
-	private sites: SiteInfo[]
+	private baseUrl		= 'https://www.lasee.io'
+	private loginUrl	= '/auth/login'
+	private apiUrl 		= '/plant'
 
-	constructor(sites:SiteInfo[]){
-		this.sites = sites
-		this.initialize()
-	}
+	private model: MonitModel = {} as MonitModel
+	private sites: SiteInfo[] = []
+	private Axios!: AxiosInstance
+	private jar: CookieJar
+	private csrfToken?: string
 
 
-	async initialize() {
-		const model = await getMonitModel('lasee')
-		if (model) {
-			this.url = model.url
-		}
-		axiosService.defaults.baseURL = this.url
+
+	async initialize(cid:string) {
+		this.model = await getMonitModel('lasee') ?? this.model
+		this.sites = await getSiteList(cid, 'lasee')
+		
+		this.jar = new CookieJar()
+		this.Axios = wrapper(axios.create({
+			baseURL: this.baseUrl,
+			withCredentials: true,
+			jar: this.jar
+		}))
+
+		this.Axios.interceptors.request.use((config) => {
+			if (this.csrfToken) {
+				config.headers['x-csrf-token'] = this.csrfToken
+			}
+			return config
+		}, (error) => Promise.reject(error))
 	}
 
 	async crawlling(): Promise<GridData[]> {
-		await this.login()
-
-		const monitoring: GridData[] = []
-
-		for (const info of this.sites!) {
-			const invs = await this.getInverter(info.code)
-			const power = invs.reduce((sum, inv) => sum + Math.floor(inv.pwr), 0)
-			const dayyld = invs.reduce((sum, inv) => sum + Math.floor(inv.day), 0)
-
-			console.log(invs)
-			
-
-			// monitoring.push({
-			// 	alias: info.alias,
-			// 	pwr: power,
-			// 	day: dayyld,
-			// 	invs: invs,
-			// });
+		await this.login(this.sites[0].id, this.sites[0].pwd)
+		const gridList: GridData[] = []
+		for (const site of this.sites) {
+			const grid = await this.fetchGrid(site)
+			gridList.push(grid)
+			await new Promise<void>(s => setTimeout(s, 1000))
 		}
-
-		return monitoring
+		return gridList
 	}
 
-	async login(): Promise<void> {
-		const payload = new URLSearchParams({
-			name: this.sites![0].id,
-			password: this.sites![0].pwd.toString(),
-		})
 
+	async login(id:string, pwd:string): Promise<void> {
 		try {
-			const response = await axiosService.post('/auth/login', payload.toString());
-			console.log('로그인 성공');
-			console.log('Cookies:', response.headers['set-cookie']);
+			const payload = {name: id, password: pwd }
+			await this.Axios.post(this.loginUrl, payload, { headers: header })
+			await new Promise<void>(s => setTimeout(s, 1000))
+			await this.fetchCsrfToken()
 		} catch (error) {
-			console.error('로그인 실패:', error);
+			console.error('LASEE LOGIN 실패:', error)
 		}
 	}
 
-	async getInverter(code: string): Promise<Inverter[]> {
+	// 메타 태그에서 CSRF 토큰 추출
+	async fetchCsrfToken(): Promise<void> {
 		try {
-			const apiUrl = `${this.url}/plant/${code}/966/inverter_status/data`;
-			console.log(apiUrl);
+			const response = await this.Axios.get('/plant/6490', {headers:header, withCredentials:true})
+			const html = response.data
+			const $ = cheerio.load(html)
 
-			const response = await axiosService.post(apiUrl);
-
-			let json = [];
-			if (response.data?.response?.data?.inverters) {
-				json = response.data?.response?.data?.inverters;
+			this.csrfToken = $('meta[name="csrf-token"]').attr('content')
+			if (!this.csrfToken) {
+				throw new Error('CSRF 토큰ERR')
 			}
-
-			return json.map((inv: any, idx: number) => ({
-				no: idx + 1,
-				run: this.convertRunStatus(inv.run_status.toString()),
-				pwr: Math.floor(inv.output_power),
-				day: Math.floor(inv.daily),
-				yld: Math.floor(inv.total),
-			}));
+			console.log('CSRF Token:', this.csrfToken)
 		} catch (error) {
-			throw new Error(error as string);
+			console.error('CSRF 토큰 추출 실패:', error)
 		}
 	}
 
-	convertRunStatus(status: string): boolean {
-		return status.toLowerCase() === 'running';
+
+	async fetchGrid(site:SiteInfo): Promise<GridData> {
+		const headers = {
+			'Accept': 					'application/json, text/javascript, */*; q=0.01',
+			'Origin': 					'https://www.lasee.io',
+			'Referer': 					'https://www.lasee.io/plant/6490',
+			'X-Requested-With': 'XMLHttpRequest',
+			'Content-Type': 		'application/x-www-form-urlencoded; charset=UTF-8',
+			'User-Agent': 		'Chrome/126.0.0.0 Safari/537.36',
+		}
+		try {
+			const payload = {check2:92}
+			const response = await this.Axios.post( `${this.apiUrl}/${site.code}/966/inverter_status/data`, payload, {headers:headers, withCredentials: true})
+			const inverters = response.data.data.inverters.map((inv: any, idx: number) => ({
+				no: idx + 1,
+				run: LaseeRunstate(inv.invert_status),
+				pwr: inv.output_power,
+				day: inv.daily,
+				yld: 0,
+			}))
+
+
+			// Grid
+			return {
+				alias:	site.alias,
+				pwr:		inverters.reduce((sum, inv) => sum + inv.pwr, 0),
+				day:		inverters.reduce((sum, inv) => sum + inv.day, 0),
+				invs:		inverters,
+			}
+		} catch (err) {
+			console.error('Lasee Inverter 에러 발생:', err)
+			return { alias: site.alias, pwr:0, day:0, invs:[] }
+		}
 	}
 }

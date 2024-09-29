@@ -67,6 +67,7 @@ export class CmBot implements Bot {
 		try {
 			const payload = { id: id, pw: pwd, commit: 'Login' }
 			await this.Axios.post('/login_ok.php', payload, { headers: {...header, ...tmp} })
+			await new Promise<void>(s => setTimeout(s, 1000))
 		} catch (error) {
 			console.error('CM 로그인 실패:', error)
 		}

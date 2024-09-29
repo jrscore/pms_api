@@ -49,7 +49,6 @@ export class EnsearchBot implements Bot {
 
 
 	async crawlling(): Promise<GridData[]> {
-		// 로그인
 		await this.login(this.sites[0].id, this.sites[0].pwd)
 
 		const gridList: GridData[] = []
@@ -64,6 +63,7 @@ export class EnsearchBot implements Bot {
 	async login(id:string, pwd:string): Promise<void> {
 		try {
 			await this.Axios.post(this.loginUrl, { userid: id, userpw: pwd } )
+			await new Promise<void>(s => setTimeout(s, 1000))
 		} catch (error) {
 			console.error('EN 로그인 실패:')
 		}

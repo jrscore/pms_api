@@ -63,7 +63,8 @@ export class DassBot implements Bot {
 	async login(id:string, pwd:string): Promise<void> {
 		try {
 			const payload = { id: id, pass: pwd }
-			const response = await this.Axios.post('/loginRequest', payload, { headers: header })
+			await this.Axios.post('/loginRequest', payload, { headers: header })
+			await new Promise<void>(s => setTimeout(s, 1000))
 		} catch (error) {
 			console.error('DASS LOGIN 실패:', error)
 		}
