@@ -1,5 +1,5 @@
 
-export interface GridData {
+export interface MonitResult {
 	alias: string
 	pac?: number
 	pwr: number

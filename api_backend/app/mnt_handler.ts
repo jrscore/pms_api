@@ -1,6 +1,7 @@
 import { BotFactory } from './bot/factory'
 import { Message, PubSub } from '@google-cloud/pubsub'
-import { GridData } from './model/grid'
+import { MonitResult } from './model/monit_result'
+import { pubsubService } from './server'
 
 
 
@@ -12,7 +13,7 @@ export const mntHandler = async (message: Message) => {
 	const taskid = msg.taskId
 	const cid = msg.cid
 	const model = msg.model
-	let result:GridData[]
+	let result:MonitResult[]
 	let responseBuffer:Buffer
 
 	try {
@@ -32,8 +33,3 @@ export const mntHandler = async (message: Message) => {
 	await pubsub.topic('response').publishMessage({ data: responseBuffer })
 	message.ack()
 }
-
-
-export const keeaHandler = async (message: Message) => {}
-export const kescoHandler = async (message: Message) => {}
-

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { GridData } from '../model/grid'
+import { MonitResult } from '../model/monit_result'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
 import { SiteInfo, MonitModel } from '../model/monit_model'
@@ -53,9 +53,9 @@ export class HdBot implements Bot {
 	}
 
 
-	async crawlling(): Promise<GridData[]> {
+	async crawlling(): Promise<MonitResult[]> {
 		await this.login(this.sites[0].id, this.sites[0].pwd)
-		const gridList: GridData[] = []
+		const gridList: MonitResult[] = []
 		for (const site of this.sites) {
 			const grid = await this.fetchGrid(site)
 			gridList.push(grid)
@@ -76,7 +76,7 @@ export class HdBot implements Bot {
 	}
 
 
-	async fetchGrid(site:SiteInfo): Promise<GridData> {
+	async fetchGrid(site:SiteInfo): Promise<MonitResult> {
 		try {
 			const response = await this.Axios.get( `${this.apiUrl}?site_id=${site.code}`, {headers:header, withCredentials: true})
 			const inverters = response.data.datas.SITE_INVERTER.map((inv: any, idx: number) => ({
@@ -86,8 +86,6 @@ export class HdBot implements Bot {
 				day: 0,
 				yld: 0,
 			}))
-
-			inverters.map(it => console.log(it))
 
 			// Grid
 			return {

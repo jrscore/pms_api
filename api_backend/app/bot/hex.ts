@@ -1,5 +1,5 @@
 import { Bot } from './factory'
-import { GridData } from '../model/grid'
+import { MonitResult } from '../model/monit_result'
 import { MonitModel, SiteInfo } from '../model/monit_model'
 import { BrowserInstance } from '../browser'
 import { hexXmlParser } from '../utils/hexParser'
@@ -52,9 +52,9 @@ export class HexBot implements Bot {
 	}
 
 
-	async crawlling(): Promise<GridData[]> {
+	async crawlling(): Promise<MonitResult[]> {
 		await this.login(this.sites[0].id, this.sites[0].pwd)
-		const gridList: GridData[] = []
+		const gridList: MonitResult[] = []
 		for (const site of this.sites) {
 			gridList.push( await this.fetchGrid(site) )
 			await new Promise<void>(s => setTimeout(s, 1000))
@@ -75,7 +75,7 @@ export class HexBot implements Bot {
 		}
 	}
 
-	async fetchGrid(site:SiteInfo): Promise<GridData> {
+	async fetchGrid(site:SiteInfo): Promise<MonitResult> {
 		const headers = {
 			'Accept': 					'application/xml, text/xml, */*; q=0.01',
 			'Referer': 					'https://weblink.hex.co.kr/kor/Pages/Monitoring.aspx?p=m',
@@ -119,34 +119,6 @@ export class HexBot implements Bot {
 		}
 	}
 
-  // async login(): Promise<void> {
-  //   await this.page!.goto (loginUrl)
-  //   await this.page!.fill (idtag, id)
-  //   await this.page!.fill (pwdtag, pwd)
-  //   await this.page!.click(logtag)
-  // }
-
-	// async fetchGrid(): Promise<GridData[]> {
-		
-	// 	let gridList: GridData[] = []
-
-	// 	try {
-	// 		// API 응답 대기
-	// 		const promise = this.page!.waitForResponse(response => response.url().includes(apiUrl))
-	// 		await this.page!.goto(apiPage)
-	// 		const response = await promise
-
-	// 		// 응답 바디를 텍스트로 변환 후 파싱
-	// 		const responseBody = await response.text()
-	// 		gridList = hexXmlParser(responseBody)
-
-	// 	} catch (error) {
-	// 		console.error('Error fetching grid:', error)
-	// 	}
-
-	// 	return gridList
-	// }
-	  // Badge 값에 따른 run 상태 반환 (예: "정지중"이면 false)
   private runState(badge: string): boolean {
     return badge.includes('정지중') ? false : true;
   }

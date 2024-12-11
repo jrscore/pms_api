@@ -1,7 +1,7 @@
-import { GridData, Inverter } from "../model/grid"
+import { MonitResult, Inverter } from "../model/monit_result"
 
 
-export function hexXmlParser(xmlString: string): GridData[] {
+export function hexXmlParser(xmlString: string): MonitResult[] {
   // XML 문자열에서 필요한 데이터를 추출합니다.
   const valueMatch = xmlString.match(/value="([^"]*)"/)
 
@@ -17,7 +17,7 @@ export function hexXmlParser(xmlString: string): GridData[] {
     const json = JSON.parse(valstr)
 
     // 그리드 리스트를 우선 생성합니다.
-    const grids: GridData[] = json.filter((item: any) => item.invid === 0).map((item: any) => ({
+    const grids: MonitResult[] = json.filter((item: any) => item.invid === 0).map((item: any) => ({
       alias: item.title,
       pwr: parseFloat(item.currentpower),
       day: parseFloat(item.daily),

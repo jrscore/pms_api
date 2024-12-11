@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { GridData } from '../model/grid'
+import { MonitResult } from '../model/monit_result'
 import { MonitModel, SiteInfo } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
 import { wrapper } from 'axios-cookiejar-support'
@@ -59,9 +59,9 @@ export class LaseeBot implements Bot {
 		}, (error) => Promise.reject(error))
 	}
 
-	async crawlling(): Promise<GridData[]> {
+	async crawlling(): Promise<MonitResult[]> {
 		await this.login(this.sites[0].id, this.sites[0].pwd)
-		const gridList: GridData[] = []
+		const gridList: MonitResult[] = []
 		for (const site of this.sites) {
 			const grid = await this.fetchGrid(site)
 			gridList.push(grid)
@@ -100,7 +100,7 @@ export class LaseeBot implements Bot {
 	}
 
 
-	async fetchGrid(site:SiteInfo): Promise<GridData> {
+	async fetchGrid(site:SiteInfo): Promise<MonitResult> {
 		const headers = {
 			'Accept': 					'application/json, text/javascript, */*; q=0.01',
 			'Origin': 					'https://www.lasee.io',

@@ -17,3 +17,5 @@ export function generateTimeBasedOnNow(): number {
 
 export const hdRunstate = (status:string) => status.toLowerCase() === 'run'
 export const LaseeRunstate = (status:number) => status === 1
+
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))

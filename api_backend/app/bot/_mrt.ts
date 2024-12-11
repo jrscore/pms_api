@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { Bot } from './factory'
-import { Inverter, GridData } from '../model/grid'
+import { Inverter, MonitResult } from '../model/monit_result'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
 import { SiteInfo, MonitModel } from '../model/monit_model'
@@ -38,7 +38,7 @@ export class MrtBot implements Bot {
 	private logoutUrl = `http://www.solar.mrt.co.kr/index.php?PID=9902`	
 	private apiUrl = `https://solar.mrt.co.kr/api/measurement?deviceUid=null`	
 	private sites: SiteInfo[] = []
-	private gridList: GridData[] = []
+	private gridList: MonitResult[] = []
 
 
 	async initialize(cid:string) {
@@ -46,7 +46,7 @@ export class MrtBot implements Bot {
 	}
 
 
-	async crawlling(): Promise<GridData[]> {
+	async crawlling(): Promise<MonitResult[]> {
 		for (const site of this.sites) {
 			if (typeof site.memo === 'object' && site.memo !== null) {
 				await this.login(site.memo.id, site.memo.pwd)

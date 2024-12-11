@@ -1,16 +1,17 @@
 import axios, { AxiosInstance } from 'axios'
 import { Bot } from './factory'
-import { Inverter, GridData } from '../model/grid'
+import { Inverter, MonitResult } from '../model/monit_result'
 import { wrapper } from 'axios-cookiejar-support'
 import { CookieJar } from 'tough-cookie'
 import { SiteInfo, MonitModel } from '../model/monit_model'
 import { getMonitModel } from '../firebase/r_mnt_model'
 import { getSiteList as getSiteList } from '../firebase/r_site_info'
+import { delay } from '../utils/util'
 
 
 const baseUrl = 'http://iplug.dasstech.com'
-
-const header = {
+const apiUrl	= `http://iplug.dasstech.com/monitoring/getDevelopmentSituationData.json`
+const header	= {
 	'Host':						'iplug.dasstech.com',
 	'Origin':					'http://iplug.dasstech.com',
 	'Referer':				'http://iplug.dasstech.com/login',
@@ -28,35 +29,27 @@ const runState = (status: string) => status.toLowerCase() === 'running'
 
 export class DassBot implements Bot {
 
-	private model: MonitModel = {} as MonitModel
 	private sites: SiteInfo[] = []
-
-	private apiUrl = `http://iplug.dasstech.com/monitoring/getDevelopmentSituationData.json`	
 	private Axios!: AxiosInstance
+	private mntList: MonitResult[] = []
 
-	async initialize(cid:string) {
-		this.model = await getMonitModel('dass') ?? this.model
+
+	async crawlling(cid:string): Promise<MonitResult[]> {
+		// Init
 		this.sites = await getSiteList(cid, 'dass')
-		
 		this.Axios = wrapper(axios.create({
 			baseURL: baseUrl,
 			withCredentials: true,
 			headers: header,
 			jar: new CookieJar()
 		}))
-	}
-
-
-	async crawlling(): Promise<GridData[]> {
-		// 로그인
+		
+		//크롤링
 		await this.login(this.sites[0].id, this.sites[0].pwd)
-
-		const gridList: GridData[] = []
 		for (const site of this.sites) {
-			const grid = await this.fetchGrid(site)
-			gridList.push(grid)
+			this.mntList.push( await this.fetchGrid(site) )
 		}
-		return gridList
+		return this.mntList
 	}
 
 
@@ -64,17 +57,18 @@ export class DassBot implements Bot {
 		try {
 			const payload = { id: id, pass: pwd }
 			await this.Axios.post('/loginRequest', payload, { headers: header })
-			await new Promise<void>(s => setTimeout(s, 1000))
+			delay(1000)
 		} catch (error) {
 			console.error('DASS LOGIN 실패:', error)
 		}
 	}
 
 
-	async fetchGrid(site:SiteInfo): Promise<GridData> {
+	async fetchGrid(site:SiteInfo): Promise<MonitResult> {
 		try {
+			delay(1000)
 			const payload = { SITE_CODE: site.code }
-			const response = await this.Axios.post(this.apiUrl, payload, { headers: header })
+			const response = await this.Axios.post(apiUrl, payload, { headers: header })
 
 			// 인버터
 			const inverters = response.data.inverterList.map((inv: any, idx: number) => ({
@@ -85,7 +79,8 @@ export class DassBot implements Bot {
 				yld: Math.floor(parseFloat(inv.powerInfo.accumulatePower))
 			}))
 
-			inverters.map(it => console.log(it))
+			// debug
+			// inverters.forEach(it => console.log(JSON.stringify(it, null, 2)))
 
 			// Grid
 			return {
@@ -95,7 +90,7 @@ export class DassBot implements Bot {
 				invs:		inverters,
 			}
 		} catch (err) {
-			console.error('Dass Inverter 에러 발생:', err)
+			console.error('Dass 에러:', err)
 			return { alias: site.alias, pwr:0, day:0, invs:[] }
 		}
 	}
